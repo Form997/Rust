@@ -1,0 +1,15 @@
+[package]
+name = "al-language"
+version = "0.1.0"
+edition = "2024"
+description = "AL: a human-readable, AI-interpretable, machine-executable language"
+license = "MIT"
+readme = "README.md"
+
+[[bin]]
+name = "al"
+path = "src/main.rs"
+
+[dependencies]
+
+[dev-dependencies]
