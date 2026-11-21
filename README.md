@@ -1,0 +1,88 @@
+# AL Language
+
+**AL** is an experimental programming-language project with the design goal:
+
+> Humans write it. AI understands it. Computers execute it.
+
+This repository contains the Rust implementation of the AL toolchain. Rust is the implementation language; AL has its own syntax, grammar, type system, and execution semantics.
+
+## Current status
+
+**Version:** 0.1.0 — lexer bootstrap
+
+Implemented:
+- Rust Cargo project structure.
+- Initial AL token model with source spans.
+- Lexer for the AL 0.1 keyword set, identifiers, strings, numbers, punctuation, newlines, and line comments.
+- Lexical errors for unsupported characters, malformed escapes, and unterminated strings.
+- Command-line entry point that reads an `.al` file and prints tokens.
+- Unit tests for core lexer behavior.
+
+Not implemented yet:
+- Parser and AST.
+- Semantic analysis and type checking.
+- AL intermediate representation (AL-IR).
+- Runtime and execution engine.
+- AI intent/interface layer.
+
+No program is executed by this version. The current CLI performs lexical analysis only.
+
+## Requirements
+
+- Rust toolchain with Cargo.
+- Rust edition 2024 support.
+
+## Run
+
+```bash
+cargo test
+cargo run -- examples/hello.al
+```
+
+## Initial AL example
+
+```al
+PROGRAM "Hello AL"
+VERSION "0.1.0"
+
+DATA:
+    message: TEXT = "Xin chao Hai Dat"
+END
+
+OUTPUT message
+```
+
+The example is currently a source-language design sample. Version 0.1.0 tokenizes it; it does not yet parse or execute it.
+
+## Design principles
+
+1. AL semantics are defined by the language specification, not improvised by an AI model.
+2. AI-generated or AI-interpreted AL must pass the same parser, semantic checks, and permission checks as human-authored AL.
+3. Execution is denied by default until a capability is explicitly granted.
+4. Facts, hypotheses, inferences, and evidence must remain distinguishable.
+5. The language specification and implementation are versioned independently and tested together.
+
+## Project layout
+
+- `specification/` — language specification.
+- `src/token.rs` — token and source-span model.
+- `src/lexer.rs` — lexical analyzer.
+- `src/main.rs` — command-line entry point.
+- `examples/` — AL source examples.
+- `tests/` — integration tests.
+
+## Roadmap
+
+| Version | Target |
+|---|---|
+| 0.1.x | Lexer and lexical test suite |
+| 0.2.x | Parser, AST, syntax diagnostics |
+| 0.3.x | Semantic analysis and type checking |
+| 0.4.x | AL intermediate representation |
+| 0.5.x | Sandboxed runtime and permission model |
+| 0.6.x | AI interface with validated intent mapping |
+| 1.0.0 | Stable specification, compiler, runtime, and conformance tests |
+
+## License
+
+MIT. See [LICENSE](LICENSE).
