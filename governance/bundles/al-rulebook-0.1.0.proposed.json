@@ -1,4 +1,5 @@
 {
+  "$schema": "../../schemas/al-rulebook-bundle.schema.json",
   "schema_version": "0.1.0",
   "bundle_id": "al-rulebook-0.1.0-proposed",
   "rulebook_version": "0.1.0",
