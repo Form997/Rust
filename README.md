@@ -70,6 +70,8 @@ The example is currently a source-language design sample. Version 0.1.0 tokenize
 - `src/main.rs` — command-line entry point.
 - `examples/` — AL source examples.
 - `tests/` — integration tests.
+- `docs/AL-LOCAL-AI-ARCHITECTURE-0.1.md` — AL Local AI architecture draft.
+- `governance/AL-MODEL-GOVERNANCE-0.1.md` — model/data governance draft.
 
 ## Roadmap
 
