@@ -121,3 +121,15 @@ These are proposed governance artifacts on the H0.2 branch. They are not yet app
 - schemas/h0-1-data-contracts.schema.json — versioned interchange data contracts.
 
 H0.1 design/review is complete. This does not mean parser, runtime, scientific solvers, local models or RAG have been implemented.
+
+
+## H0.2.2 — Governance record contracts (draft)
+
+H0.2.2 adds machine-readable JSON Schema contracts and example fixtures for:
+
+- `governance/schemas/metric-card.schema.json` — metric definition, formula, unit, scale, population, measurement protocol, aggregation, uncertainty, threshold state and evidence.
+- `governance/schemas/source-record.schema.json` — source provenance, instrument type, jurisdiction, applicability, official URL and Vietnam adoption status.
+- `governance/schemas/decision-record.schema.json` — decision context, alternatives, rule references, evidence, impact, rollback and approval.
+- `governance/schemas/training-run-manifest.schema.json` — pinned Rulebook/metric versions, dataset provenance and checksums, code commit, configuration, seeds, environment and artifacts.
+
+The CI workflow validates every schema meta-structure, all positive fixtures and deliberate negative fixtures. A schema pass proves structural conformity only; it does not prove a source is authentic, a metric scientifically valid, dataset use lawful, or a decision approved. Example records remain proposed/unverified/evaluation-only. No threshold is invented.
