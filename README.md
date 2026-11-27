@@ -167,3 +167,21 @@ JSON Schema CI remains the structural contract check. Rust validation is an addi
 - `al rulebook compare` produces an informational top-level JSON change review.
 - `al rulebook verify-update` verifies the pinned root, signer authorization, human approval, current-parent hash and strictly increasing semantic version.
 - No production private key or root fingerprint is stored in this repository. This phase does not yet activate updates or provide a graphical UI.
+
+
+## H0.2.6 — Rulebook Enforcement Core
+
+- [`governance/H0.2.6-ENFORCEMENT-CORE.md`](governance/H0.2.6-ENFORCEMENT-CORE.md) documents the fail-closed subsystem policy gates and integration requirements.
+- Seven gates are defined: `compiler`, `runtime`, `ai`, `training`, `evaluation`, `scientific`, and `release`.
+- `cargo run -- rulebook gate <gate> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>` verifies the external root pin, human-signed Rulebook and at least one approved in-scope rule with explicit control IDs.
+- Missing or unapproved policy denies authorization. The central gate engine is implemented; actual compiler/runtime/AI/training/evaluation/scientific/release module wiring remains pending until those modules exist.
+
+
+## H0.2.7 — Control Evidence Binding
+
+- `governance/schemas/control-evidence.schema.json` defines a verifiable control record: gate, implementation and verification states, owner, scope, timestamp, test IDs and evidence IDs.
+- `src/control_evidence.rs` resolves every control ID referenced by an approved in-scope rule to a matching evidence record.
+- The `rulebook gate` CLI now denies authorization if the signed Rulebook lacks the catalogue or any referenced control is not implemented, verified, complete or scoped to the requested gate.
+- CI validates positive and negative control-evidence fixtures; unit tests exercise missing catalogue, unresolved IDs, unverified state, wrong gate and missing tests/evidence.
+
+Evidence records are signed assertions and references, not proof that a production module actually invokes the gate or that referenced CI artifacts exist. Actual subsystem integration and independent artifact/deployment attestation remain separate required work.

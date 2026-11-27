@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://haidat.example/schemas/al-control-evidence.schema.json",
+  "title": "AL Rulebook Control Evidence Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["control_id", "gate", "status", "verification_status", "owner", "scope", "last_verified_at", "test_ids", "evidence_ids"],
+  "properties": {
+    "control_id": {"type":"string","minLength":1},
+    "gate": {"enum":["compiler","runtime","ai","training","evaluation","scientific","release"]},
+    "status": {"enum":["planned","implemented","retired","blocked"]},
+    "verification_status": {"enum":["pending","verified","failed","expired"]},
+    "owner": {"type":"string","minLength":1},
+    "scope": {"type":"string","minLength":1},
+    "last_verified_at": {"type":"string","format":"date-time"},
+    "test_ids": {"type":"array","minItems":1,"items":{"type":"string","minLength":1}},
+    "evidence_ids": {"type":"array","minItems":1,"items":{"type":"string","minLength":1}},
+    "notes": {"type":"string"}
+  }
+}

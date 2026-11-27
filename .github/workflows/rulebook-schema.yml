@@ -42,6 +42,7 @@ jobs:
           check-jsonschema --schemafile governance/schemas/authorized-signers.schema.json governance/trust/authorized-signers.example.json
           check-jsonschema --schemafile governance/schemas/signed-rulebook-envelope.schema.json governance/fixtures/rulebook-envelope.untrusted.json
           check-jsonschema --schemafile governance/schemas/signed-root-registry.schema.json governance/fixtures/signed-root-registry.example.json
+          check-jsonschema --schemafile governance/schemas/control-evidence.schema.json governance/fixtures/control-evidence.verified.json
 
       - name: Validate positive fixtures
         shell: bash
@@ -63,6 +64,10 @@ jobs:
           fi
           if check-jsonschema --schemafile governance/schemas/metric-card.schema.json governance/fixtures/invalid-metric-card-approved-without-threshold.json; then
             echo "ERROR: invalid metric card unexpectedly passed."
+            exit 1
+          fi
+          if check-jsonschema --schemafile governance/schemas/control-evidence.schema.json governance/fixtures/control-evidence.invalid-unverified.json; then
+            echo "ERROR: invalid control evidence unexpectedly passed."
             exit 1
           fi
           echo "Expected rejection confirmed."
@@ -91,5 +96,9 @@ jobs:
           fi
           if cargo run --quiet -- rulebook verify-registry governance/fixtures/signed-root-registry.example.json 0000000000000000000000000000000000000000000000000000000000000000; then
             echo "ERROR: Rust verifier accepted an unpinned root key."
+            exit 1
+          fi
+          if cargo run --quiet -- rulebook gate compiler governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json 0000000000000000000000000000000000000000000000000000000000000000; then
+            echo "ERROR: Rulebook gate accepted an untrusted root registry."
             exit 1
           fi
