@@ -1,0 +1,9 @@
+{
+  "algorithm": "Ed25519",
+  "root_public_key_base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+  "payload": {
+    "registry_version": "0.1.0",
+    "keys": []
+  },
+  "signature_base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+}
