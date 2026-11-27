@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.1.0",
+  "decision_id": "AL-DEC-RULEBOOK-METRIC-CARD-01",
+  "title": "Adopt a structured metric-card record",
+  "context": "Training and evaluation metrics require explicit definitions, units, populations and evidence.",
+  "decision": "Propose a versioned metric-card schema for validation before metrics can be used as release gates.",
+  "alternatives": [
+    {
+      "option": "Free-form Markdown only",
+      "assessment": "Readable but not reliably machine-validatable."
+    }
+  ],
+  "status": "proposed",
+  "rulebook_version": "0.1.0",
+  "rule_ids": [
+    "AL-GOV-METRIC-CARD"
+  ],
+  "evidence": [],
+  "impact": {
+    "components": [
+      "training pipeline",
+      "evaluation harness",
+      "Rulebook Center"
+    ],
+    "risks": [
+      "Schema may evolve and require migrations."
+    ],
+    "rollback_plan": "Retain prior schema version and mark the new version deprecated if incompatibility is found."
+  },
+  "approval": {
+    "state": "not_requested",
+    "approver": null,
+    "approved_at": null,
+    "review_notes": null
+  },
+  "created_at": "2026-11-27T00:00:00Z",
+  "created_by": "AL project",
+  "supersedes": null
+}

@@ -121,3 +121,40 @@ These are proposed governance artifacts on the H0.2 branch. They are not yet app
 - schemas/h0-1-data-contracts.schema.json — versioned interchange data contracts.
 
 H0.1 design/review is complete. This does not mean parser, runtime, scientific solvers, local models or RAG have been implemented.
+
+
+## H0.2.2 — Governance record contracts (draft)
+
+H0.2.2 adds machine-readable JSON Schema contracts and example fixtures for:
+
+- `governance/schemas/metric-card.schema.json` — metric definition, formula, unit, scale, population, measurement protocol, aggregation, uncertainty, threshold state and evidence.
+- `governance/schemas/source-record.schema.json` — source provenance, instrument type, jurisdiction, applicability, official URL and Vietnam adoption status.
+- `governance/schemas/decision-record.schema.json` — decision context, alternatives, rule references, evidence, impact, rollback and approval.
+- `governance/schemas/training-run-manifest.schema.json` — pinned Rulebook/metric versions, dataset provenance and checksums, code commit, configuration, seeds, environment and artifacts.
+
+The CI workflow validates every schema meta-structure, all positive fixtures and deliberate negative fixtures. A schema pass proves structural conformity only; it does not prove a source is authentic, a metric scientifically valid, dataset use lawful, or a decision approved. Example records remain proposed/unverified/evaluation-only. No threshold is invented.
+
+
+## H0.2.3 — Rust Rulebook Validator (draft)
+
+The Rust CLI now has a separate Rulebook validation path while preserving the existing AL source lexer invocation:
+
+```sh
+cargo run -- rulebook validate metric-card governance/fixtures/metric-card.proposed.json
+cargo run -- rulebook validate source-record governance/fixtures/source-record.unverified.json
+cargo run -- rulebook validate decision-record governance/fixtures/decision-record.proposed.json
+cargo run -- rulebook validate training-run-manifest governance/fixtures/training-run-manifest.evaluation-only.json
+```
+
+Supported record kinds: `bundle`, `metric-card`, `source-record`, `decision-record`, and `training-run-manifest`. The validator returns a non-zero process exit code for errors, prints warnings separately, and includes unit tests for valid fixtures and rejected governance states.
+
+The Rust validator enforces selected governance invariants: an approved metric threshold needs a value and evidence IDs; verified sources need HTTPS URLs and a review date; approved decisions need an approved approval state, approver and timestamp; training/fine-tuning requires an approved Rulebook, verified dataset-rights status and approved governance review. Unverified sources remain warnings rather than being silently treated as authoritative.
+
+JSON Schema CI remains the structural contract check. Rust validation is an additional semantic gate, not a substitute for official-source verification, cryptographic checksum verification, legal review, scientific validation or human approval. It does not execute AL programs or grant permissions.
+
+
+## Rulebook Authority
+
+- H0.2.4 adds Ed25519 verification for human-approved Rulebook envelopes. See [`governance/H0.2.4-CORE-AUTHORITY.md`](governance/H0.2.4-CORE-AUTHORITY.md).
+- Verify a signed envelope with `cargo run -- rulebook verify-signed envelope.json trusted-keys.json`.
+- The example trusted-key registry is intentionally empty. Production trust roots must be anchored outside the mutable repository; this phase does not yet implement production key custody or bundle activation.

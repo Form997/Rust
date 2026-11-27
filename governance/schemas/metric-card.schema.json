@@ -1,0 +1,421 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://form997.github.io/Rust/governance/schemas/metric-card.schema.json",
+  "title": "AL Metric Card",
+  "description": "A versioned, auditable specification for a metric used in AL evaluation or training gates. Structural validation does not establish scientific validity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "metric_id",
+    "version",
+    "name",
+    "domain",
+    "purpose",
+    "definition",
+    "formula",
+    "unit",
+    "scale",
+    "population",
+    "measurement_protocol",
+    "aggregation",
+    "uncertainty",
+    "threshold",
+    "evidence",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "metric_id": {
+      "type": "string",
+      "pattern": "^AL-MET-[A-Z0-9-]+$",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain": {
+      "enum": [
+        "language",
+        "compiler",
+        "ai",
+        "retrieval",
+        "scientific",
+        "numeric",
+        "reliability",
+        "security",
+        "resource",
+        "other"
+      ]
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "definition": {
+      "type": "string",
+      "minLength": 1
+    },
+    "formula": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "method"
+      ],
+      "properties": {
+        "expression": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "symbol",
+              "meaning"
+            ],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "minLength": 1
+              },
+              "meaning": {
+                "type": "string",
+                "minLength": 1
+              },
+              "unit": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "default": []
+        }
+      }
+    },
+    "unit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scale": {
+      "enum": [
+        "ratio",
+        "interval",
+        "ordinal",
+        "nominal",
+        "boolean",
+        "count",
+        "duration",
+        "bytes",
+        "custom"
+      ]
+    },
+    "population": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "inclusion",
+        "exclusion"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inclusion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exclusion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sample_size": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "sampling_method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "measurement_protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "procedure",
+        "instrument_or_implementation",
+        "conditions"
+      ],
+      "properties": {
+        "procedure": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instrument_or_implementation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conditions": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repeat_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "reference_protocol": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "aggregation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "aggregation_unit"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregation_unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weighting": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "reported"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reported": {
+          "type": "boolean"
+        },
+        "confidence_level": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "limitations": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "threshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "value",
+        "unit",
+        "rationale",
+        "evidence_ids"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "NOT_SET",
+            "proposed",
+            "approved"
+          ]
+        },
+        "value": {
+          "type": [
+            "number",
+            "integer",
+            "string",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "kind",
+          "locator",
+          "supports"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "standard",
+              "peer_reviewed",
+              "official_document",
+              "benchmark",
+              "internal_test",
+              "expert_review",
+              "other"
+            ]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "supports": {
+            "type": "string",
+            "minLength": 1
+          },
+          "accessed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "minItems": 0
+    },
+    "status": {
+      "enum": [
+        "proposed",
+        "verified",
+        "approved",
+        "deprecated",
+        "withdrawn",
+        "blocked"
+      ]
+    },
+    "owner": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "next_review": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "threshold": {
+            "properties": {
+              "state": {
+                "const": "approved"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          }
+        },
+        "required": [
+          "threshold"
+        ]
+      },
+      "then": {
+        "properties": {
+          "threshold": {
+            "properties": {
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "evidence_ids": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "value",
+              "evidence_ids"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
