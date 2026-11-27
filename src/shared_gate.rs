@@ -8,7 +8,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
-use crate::authority::verify_signed_bundle;
+use crate::authority::{verify_signed_bundle, verify_signed_registry};
 use crate::control_evidence::verify_control_evidence;
 use crate::policy_gate::{authorize_gate, Gate};
 
@@ -136,7 +136,7 @@ pub fn evaluate_gate(
         return Ok(review(request, "REQUIRED_EVIDENCE_NOT_SUPPLIED",
             "caller supplied no evidence references; no operation may be implicitly allowed".into()));
     }
-    if let Err(error) = verify_signed_bundle(envelope, trusted_registry) {
+    if let Err(error) = verify_signed_bundle(envelope, trusted_registry.as_value()) {
         return Ok(deny(request, "RULEBOOK_AUTHORITY_VERIFICATION_FAILED", error.to_string()));
     }
     let payload = envelope.get("payload")
@@ -145,7 +145,7 @@ pub fn evaluate_gate(
         .filter(|v| !v.trim().is_empty())
         .ok_or_else(|| GateApiError("verified Rulebook has no version".into()))?.to_owned();
     let policy_digest = sha256_json(payload)?;
-    let permit = match authorize_gate(envelope, trusted_registry, gate) {
+    let permit = match authorize_gate(envelope, trusted_registry.as_value(), gate) {
         Ok(permit) => permit,
         Err(error) => return Ok(deny(request, "NO_APPROVED_RULE_FOR_SUBSYSTEM", error.to_string())),
     };
