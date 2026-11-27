@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://form997.github.io/Rust/governance/schemas/source-record.schema.json",
+  "title": "AL Rulebook Source Record",
+  "description": "Provenance and applicability record for a legal instrument, standard, recommendation or technical source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_id",
+    "issuing_body",
+    "title",
+    "instrument_type",
+    "identifier_edition",
+    "jurisdiction",
+    "publication_date",
+    "effective_date",
+    "status",
+    "official_url",
+    "verification_status",
+    "applicability",
+    "adoption_status_vn",
+    "reviewed_at",
+    "next_review"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^AL-SRC-[A-Z0-9-]+$",
+      "minLength": 1
+    },
+    "issuing_body": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "instrument_type": {
+      "enum": [
+        "law",
+        "regulation",
+        "treaty",
+        "standard",
+        "technical_specification",
+        "recommendation",
+        "guidance",
+        "research",
+        "other"
+      ]
+    },
+    "identifier_edition": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "jurisdiction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "publication_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "effective_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "status": {
+      "enum": [
+        "current",
+        "amended",
+        "withdrawn",
+        "superseded",
+        "draft",
+        "unknown"
+      ]
+    },
+    "official_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "verification_status": {
+      "enum": [
+        "unverified",
+        "verified_official_source",
+        "blocked"
+      ]
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_nature",
+        "scope",
+        "notes"
+      ],
+      "properties": {
+        "binding_nature": {
+          "enum": [
+            "legally_binding",
+            "voluntary",
+            "guidance",
+            "depends_on_adoption",
+            "unknown"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "adoption_status_vn": {
+      "enum": [
+        "adopted",
+        "partially_adopted",
+        "not_adopted",
+        "not_applicable",
+        "unverified"
+      ]
+    },
+    "vietnam_adoption_reference": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "next_review": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "reviewer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}
