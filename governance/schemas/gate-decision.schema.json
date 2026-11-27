@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://form997.github.io/Rust/governance/schemas/gate-decision.schema.json",
+  "title": "AL Shared Rulebook Gate Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "decision",
+    "subsystem",
+    "operation",
+    "subject_type",
+    "subject_sha256",
+    "rulebook_version",
+    "rulebook_sha256",
+    "evaluated_at",
+    "verifier_version",
+    "control_ids",
+    "evidence_refs",
+    "reason_codes",
+    "explanation"
+  ],
+  "properties": {
+    "decision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "enum": [
+        "allow",
+        "deny",
+        "review"
+      ]
+    },
+    "subsystem": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rulebook_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rulebook_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^([a-f0-9]{64})$"
+    },
+    "evaluated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verifier_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "control_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "explanation": {
+      "type": "string"
+    }
+  }
+}

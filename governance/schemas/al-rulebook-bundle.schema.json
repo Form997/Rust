@@ -223,6 +223,15 @@
               "type": "string"
             },
             "uniqueItems": true
+          },
+          "operations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
           }
         },
         "additionalProperties": false
@@ -288,6 +297,12 @@
     "$schema": {
       "type": "string",
       "const": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "control_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "control-evidence.schema.json"
+      }
     }
   }
 }
