@@ -185,3 +185,20 @@ JSON Schema CI remains the structural contract check. Rust validation is an addi
 - CI validates positive and negative control-evidence fixtures; unit tests exercise missing catalogue, unresolved IDs, unverified state, wrong gate and missing tests/evidence.
 
 Evidence records are signed assertions and references, not proof that a production module actually invokes the gate or that referenced CI artifacts exist. Actual subsystem integration and independent artifact/deployment attestation remain separate required work.
+
+
+## H0.2.8 — Evidence Verification & Audit Chain
+
+- `src/evidence_audit.rs` verifies artifact SHA-256 against actual bytes, checks CI metadata consistency, and rejects expired or revoked evidence.
+- JSONL audit records are linked by sequence and SHA-256 previous-record hashes; edits and broken links are detected.
+- The CI metadata snapshot is not a cryptographically authenticated GitHub attestation. A same-disk hash chain is tamper-evident, not immutable.
+- See `governance/H0.2.8-EVIDENCE-VERIFICATION-AUDIT.md`.
+
+## H0.2.9 — Trusted Attestation & Audit Anchor
+
+- `src/attestation_anchor.rs` creates and verifies audit anchors binding the complete ledger digest, sequence and final record hash.
+- `al rulebook attestation-verify` delegates cryptographic artifact-attestation verification to the official GitHub CLI and requires the expected repository, signer workflow and SLSA provenance predicate.
+- CI attests a generated audit anchor using GitHub Artifact Attestations and verifies it immediately.
+- See `governance/H0.2.9-TRUSTED-ATTESTATION-AUDIT-ANCHOR.md`.
+
+These H0.2.8/H0.2.9 additions remain development-branch work until reviewed, tested and merged. Attestation proves provenance under the configured trust model, not scientific correctness, legal authority or absolute immunity to repository/workflow compromise.

@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://haidat.dev/al/schemas/audit-anchor.schema.json",
+  "title":"AL Audit Chain External Anchor",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","sequence","head_record_sha256","ledger_sha256"],
+  "properties":{
+    "schema_version":{"const":"al-audit-anchor-1"},
+    "sequence":{"type":"integer","minimum":1},
+    "head_record_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "ledger_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}
+  }
+}
