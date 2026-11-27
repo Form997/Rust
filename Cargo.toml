@@ -11,6 +11,8 @@ name = "al"
 path = "src/main.rs"
 
 [dependencies]
+base64 = "0.22"
+ed25519-dalek = "2"
 serde_json = "1"
 
 [dev-dependencies]
