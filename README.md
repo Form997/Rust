@@ -89,3 +89,13 @@ The example is currently a source-language design sample. Version 0.1.0 tokenize
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+
+## H0.1 technical completion pack
+
+- docs/H0.1-COMPLETION-REPORT.md — completion report, inspected source boundary and deferred work.
+- docs/H0.1-TECHNICAL-BASELINE.md — data structures, algorithms, numerical/scientific computing, ML, local AI, RAG, hardware plan and H1 backlog.
+- docs/H0.1-ARCHITECTURE-DECISIONS.md — architecture decision records and evidence references.
+- schemas/h0-1-data-contracts.schema.json — versioned interchange data contracts.
+
+H0.1 design/review is complete. This does not mean parser, runtime, scientific solvers, local models or RAG have been implemented.
