@@ -1,11 +1,13 @@
 mod authority;
 mod lexer;
+mod policy_gate;
 mod rulebook;
 mod token;
 
 use std::{env, fs, process::ExitCode};
 use authority::{verify_signed_bundle, verify_signed_registry, verify_update};
 use lexer::Lexer;
+use policy_gate::{Gate, authorize_gate};
 use rulebook::{RecordKind, validate};
 use serde_json::Value;
 
@@ -18,6 +20,7 @@ fn print_usage() {
     eprintln!("  al rulebook verify-registry <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("  al rulebook verify-update <current-payload.json> <candidate-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("  al rulebook compare <current-payload.json> <candidate-payload.json>");
+    eprintln!("  al rulebook gate <compiler|runtime|ai|training|evaluation|scientific|release> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("The root fingerprint must come from separately protected deployment configuration.");
 }
 fn read_json(path: &str) -> Result<Value,String> {
@@ -49,6 +52,24 @@ fn run_rulebook(args: &[String]) -> ExitCode {
             match verify_update(&current,&candidate,&registry) {
                 Ok(())=>{println!("UPDATE VERIFIED: signature, authority, parent hash and version progression passed");ExitCode::SUCCESS},
                 Err(e)=>{eprintln!("UPDATE DENIED: {e}");ExitCode::FAILURE}
+            }
+        }
+        Some("gate") if args.len()==6 => {
+            let Some(gate)=Gate::parse(&args[2]) else {
+                eprintln!("DENIED: unknown subsystem gate '{}'",args[2]);
+                return ExitCode::from(2);
+            };
+            let envelope=match read_json(&args[3]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
+            let signed_registry=match read_json(&args[4]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
+            let registry=match verify_signed_registry(&signed_registry,&args[5]) {
+                Ok(v)=>v,Err(e)=>{eprintln!("DENIED: trust registry: {e}");return ExitCode::FAILURE;}
+            };
+            match authorize_gate(&envelope,&registry,gate) {
+                Ok(permit)=>{
+                    println!("PERMITTED: gate={} rulebook={} rules={}",permit.gate.as_str(),permit.rulebook_version,permit.rule_ids.join(","));
+                    ExitCode::SUCCESS
+                },
+                Err(e)=>{eprintln!("DENIED: {}",e);ExitCode::FAILURE}
             }
         }
         Some("compare") if args.len()==4 => {
