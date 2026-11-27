@@ -93,3 +93,7 @@ jobs:
             echo "ERROR: Rust verifier accepted an unpinned root key."
             exit 1
           fi
+          if cargo run --quiet -- rulebook gate compiler governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json 0000000000000000000000000000000000000000000000000000000000000000; then
+            echo "ERROR: Rulebook gate accepted an untrusted root registry."
+            exit 1
+          fi
