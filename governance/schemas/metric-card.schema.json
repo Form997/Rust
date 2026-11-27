@@ -376,5 +376,46 @@
       ],
       "format": "date"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "threshold": {
+            "properties": {
+              "state": {
+                "const": "approved"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          }
+        },
+        "required": [
+          "threshold"
+        ]
+      },
+      "then": {
+        "properties": {
+          "threshold": {
+            "properties": {
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "evidence_ids": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "value",
+              "evidence_ids"
+            ]
+          }
+        }
+      }
+    }
+  ]
 }
