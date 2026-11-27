@@ -183,16 +183,17 @@ mod tests {
         assert!(verify_update(&current,&candidate,&verified).is_ok());
     }
     #[test] fn rejects_update_with_wrong_parent_hash() {
-        let (registry,current,mut candidate,pin,_) = signed_registry_and_bundle();
+        let (registry,current,mut candidate,pin,key) = signed_registry_and_bundle();
         candidate["payload"]["parent_bundle_sha256"] = Value::String("f".repeat(64));
+        let signature = key.sign(&serde_json::to_vec(&candidate["payload"]).unwrap());
+        candidate["signature_base64"] = Value::String(STANDARD.encode(signature.to_bytes()));
         let verified = verify_signed_registry(&registry,&pin).unwrap();
         assert!(verify_update(&current,&candidate,&verified).unwrap_err().0.contains("parent hash"));
     }
     #[test] fn rejects_update_with_non_increasing_version() {
         let (registry,current,mut candidate,pin,key) = signed_registry_and_bundle();
         candidate["payload"]["rulebook_version"] = Value::String("0.1.0".into());
-        let payload = &candidate["payload"];
-        let sig = key.sign(&serde_json::to_vec(payload).unwrap());
+        let sig = key.sign(&serde_json::to_vec(&candidate["payload"]).unwrap());
         candidate["signature_base64"] = Value::String(STANDARD.encode(sig.to_bytes()));
         let verified = verify_signed_registry(&registry,&pin).unwrap();
         assert!(verify_update(&current,&candidate,&verified).unwrap_err().0.contains("greater than current"));
