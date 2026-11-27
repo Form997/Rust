@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "governance/**"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/rulebook-schema.yml"
   push:
     branches:
@@ -36,6 +39,8 @@ jobs:
             echo "Checking schema: $schema"
             check-jsonschema --check-metaschema "$schema"
           done
+          check-jsonschema --schemafile governance/schemas/authorized-signers.schema.json governance/trust/authorized-signers.example.json
+          check-jsonschema --schemafile governance/schemas/signed-rulebook-envelope.schema.json governance/fixtures/rulebook-envelope.untrusted.json
 
       - name: Validate positive fixtures
         shell: bash
@@ -77,5 +82,9 @@ jobs:
           cargo run --quiet -- rulebook validate training-run-manifest governance/fixtures/training-run-manifest.evaluation-only.json
           if cargo run --quiet -- rulebook validate metric-card governance/fixtures/invalid-metric-card-approved-without-threshold.json; then
             echo "ERROR: Rust validator accepted an invalid metric card."
+            exit 1
+          fi
+          if cargo run --quiet -- rulebook verify-signed governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json; then
+            echo "ERROR: Rust verifier accepted an untrusted Rulebook signer."
             exit 1
           fi
