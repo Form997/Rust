@@ -71,6 +71,7 @@ The example is currently a source-language design sample. Version 0.1.0 tokenize
 - `examples/` — AL source examples.
 - `tests/` — integration tests.
 - `docs/AL-LOCAL-AI-ARCHITECTURE-0.1.md` — AL Local AI architecture draft.
+- `docs/H0.1-SCIENTIFIC-COMPUTING-AND-LOCAL-AI-REVIEW.md` — H0.1 review scope: data structures, algorithms, mathematics, scientific computing, learning methods, local LLM/LLMs, and RAG.
 - `governance/AL-MODEL-GOVERNANCE-0.1.md` — model/data governance draft.
 
 ## Roadmap
