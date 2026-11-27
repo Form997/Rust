@@ -42,6 +42,7 @@ jobs:
           check-jsonschema --schemafile governance/schemas/signed-root-registry.schema.json governance/fixtures/signed-root-registry.example.json
           check-jsonschema --schemafile governance/schemas/control-evidence.schema.json governance/fixtures/control-evidence.verified.json
           check-jsonschema --schemafile governance/schemas/evidence-manifest.schema.json governance/fixtures/evidence-manifest.example.json
+          check-jsonschema --schemafile governance/schemas/audit-anchor.schema.json governance/fixtures/audit-anchor.example.json
       - name: Validate positive fixtures
         shell: bash
         run: |
@@ -89,6 +90,7 @@ jobs:
           cargo run --quiet -- rulebook audit-append /tmp/al-anchor-ledger.jsonl /tmp/al-anchor-event.json
           cargo run --quiet -- rulebook audit-anchor-create /tmp/al-anchor-ledger.jsonl /tmp/al-audit-anchor.json
           cargo run --quiet -- rulebook audit-anchor-verify /tmp/al-anchor-ledger.jsonl /tmp/al-audit-anchor.json
+          check-jsonschema --schemafile governance/schemas/audit-anchor.schema.json /tmp/al-audit-anchor.json
 
       - name: Attest the audit anchor
         uses: actions/attest-build-provenance@v2
