@@ -74,5 +74,5 @@ jobs:
           digest=$(sha256sum /tmp/al-evidence-artifact.bin | cut -d ' ' -f 1)
           sed "s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/$digest/" governance/fixtures/evidence-manifest.example.json > /tmp/al-evidence-manifest.json
           cargo run --quiet -- rulebook evidence-verify /tmp/al-evidence-manifest.json /tmp/al-evidence-artifact.bin Form997/Rust 2026-11-27T11:00:00Z
-          cargo run --quiet -- rulebook audit-append /tmp/al-audit.jsonl '{"action":"ci_smoke_test","result":"success"}'
+          cargo run --quiet -- rulebook audit-append /tmp/al-audit.jsonl governance/fixtures/audit-event.example.json
           cargo run --quiet -- rulebook audit-verify /tmp/al-audit.jsonl
