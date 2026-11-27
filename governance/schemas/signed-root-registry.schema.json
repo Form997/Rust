@@ -20,6 +20,7 @@
     },
     "payload": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "registry_version",
         "keys"
@@ -32,7 +33,38 @@
         "keys": {
           "type": "array",
           "items": {
-            "$ref": "authorized-signers.schema.json#/$defs/signer"
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key_id",
+              "principal_id",
+              "role",
+              "status",
+              "public_key_base64"
+            ],
+            "properties": {
+              "key_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "principal_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "role": {
+                "const": "rulebook_authority"
+              },
+              "status": {
+                "enum": [
+                  "active",
+                  "revoked"
+                ]
+              },
+              "public_key_base64": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9+/]{43}=$"
+              }
+            }
           }
         }
       }
