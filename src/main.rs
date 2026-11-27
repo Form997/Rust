@@ -127,7 +127,8 @@ fn run_rulebook(args: &[String]) -> ExitCode {
             };
             match evaluate_gate(&request,&envelope,&registry) {
                 Ok(decision)=>{
-                    println!("{}",serde_json::to_string_pretty(&decision).unwrap_or_else(|_| "{\\"decision\\":\\"DENY\\",\\"reason_codes\\":[\\"SERIALIZATION_FAILURE\\"]}".into()));
+                    let rendered=serde_json::to_string_pretty(&decision).unwrap_or_else(|_| String::from("SERIALIZATION_FAILURE"));
+                    println!("{rendered}");
                     if decision.decision.as_str()=="ALLOW" {ExitCode::SUCCESS} else {ExitCode::FAILURE}
                 },
                 Err(e)=>{eprintln!("GATE REQUEST INVALID: {e}");ExitCode::from(2)}
