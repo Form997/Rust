@@ -4,7 +4,7 @@ mod rulebook;
 mod token;
 
 use std::{env, fs, process::ExitCode};
-use authority::{canonical_sha256, verify_signed_bundle, verify_signed_registry, verify_update};
+use authority::{verify_signed_bundle, verify_signed_registry, verify_update};
 use lexer::Lexer;
 use rulebook::{RecordKind, validate};
 use serde_json::Value;
