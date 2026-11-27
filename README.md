@@ -158,3 +158,12 @@ JSON Schema CI remains the structural contract check. Rust validation is an addi
 - H0.2.4 adds Ed25519 verification for human-approved Rulebook envelopes. See [`governance/H0.2.4-CORE-AUTHORITY.md`](governance/H0.2.4-CORE-AUTHORITY.md).
 - Verify a signed envelope with `cargo run -- rulebook verify-signed envelope.json trusted-keys.json`.
 - The example trusted-key registry is intentionally empty. Production trust roots must be anchored outside the mutable repository; this phase does not yet implement production key custody or bundle activation.
+
+
+## H0.2.5 — Root of Trust and Rulebook Update Center
+
+- [`governance/H0.2.5-ROOT-OF-TRUST-UPDATE-CENTER.md`](governance/H0.2.5-ROOT-OF-TRUST-UPDATE-CENTER.md) defines the offline root trust chain and update lifecycle.
+- `al rulebook verify-registry` verifies the root-signed signer registry against a SHA-256 fingerprint supplied out-of-band.
+- `al rulebook compare` produces an informational top-level JSON change review.
+- `al rulebook verify-update` verifies the pinned root, signer authorization, human approval, current-parent hash and strictly increasing semantic version.
+- No production private key or root fingerprint is stored in this repository. This phase does not yet activate updates or provide a graphical UI.
