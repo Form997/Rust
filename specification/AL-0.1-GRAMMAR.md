@@ -45,7 +45,7 @@ The core grammar uses only colon `:` and equals `=` as punctuation. Other punctu
 
 ## 3. Core grammar (EBNF)
 
-The following grammar describes the H1.2 core profile. `NEWLINE` is a logical line ending token; `EOF` is the end of source.
+The following grammar describes the H1.2 core profile at the token level. Horizontal spaces and tabs are discarded by the current lexer; they are not grammar terminals. `NEWLINE` is a logical line ending token; `EOF` is the end of source.
 
 ```ebnf
 source          = { blank_line }, program, { blank_line }, EOF ;
@@ -58,8 +58,8 @@ program         = program_header, NEWLINE,
                   output_statement,
                   { blank_line } ;
 
-program_header  = "PROGRAM", horizontal_space, string ;
-version_header  = "VERSION", horizontal_space, string ;
+program_header  = "PROGRAM", string ;
+version_header  = "VERSION", string ;
 
 data_block      = "DATA", ":", NEWLINE,
                   { blank_line },
@@ -69,10 +69,10 @@ data_block      = "DATA", ":", NEWLINE,
 
 data_declaration
                 = identifier, ":", type_name,
-                  [ horizontal_space, "=", horizontal_space, literal ] ;
+                  [ "=", literal ] ;
 
 output_statement
-                = "OUTPUT", horizontal_space, identifier ;
+                = "OUTPUT", identifier ;
 
 type_name       = identifier ;
 literal         = string | number ;
@@ -89,9 +89,10 @@ digit           = "0"…"9" ;
 string          = '"', { string_character | escape }, '"' ;
 escape          = "\\n" | "\\r" | "\\t" | '\\"' | "\\\\" ;
 
-blank_line      = { horizontal_space }, NEWLINE ;
-horizontal_space
-                = (" " | "\\t"), { " " | "\\t" } ;
+string_character
+                = any Unicode scalar value except quote, backslash, CR, or LF ;
+
+blank_line      = NEWLINE ;
 ```
 
 ### 3.1 Grammar interpretation notes
@@ -104,7 +105,7 @@ horizontal_space
 6. Blank lines are permitted between top-level forms and data declarations. A statement cannot be continued across physical lines.
 7. A final line ending after `OUTPUT` is optional. The source may end immediately after the statement.
 8. Comments are removed by lexical analysis; a comment-only line behaves as a blank line.
-9. Whitespace around `:` is not admitted by the conservative grammar. Whitespace around `=` is admitted; the lexer already discards horizontal whitespace, so the parser sees the same token sequence either way. The implementation should not make indentation semantically meaningful.
+9. The current lexer discards horizontal spaces and tabs rather than emitting trivia tokens. The parser therefore cannot enforce whether a physical space appeared between adjacent tokens. H1.2 treats horizontal whitespace as insignificant; indentation never changes scope. If mandatory separators are desired, the lexer must preserve whitespace or enforce token-boundary rules before the grammar is frozen.
 
 ## 4. Reserved but not yet grammatical
 
@@ -185,7 +186,7 @@ The following are conservative choices made to keep the first parser determinist
 - whether output should accept expressions rather than a single identifier;
 - whether initializers should accept booleans and null in 0.1;
 - whether type names should be restricted to the reserved type vocabulary;
-- whether optional whitespace around colons should be accepted;
+- whether horizontal whitespace should remain insignificant, or whether selected token pairs must require a physical separator (which requires a lexer contract change);
 - whether a final newline should be required.
 
 Until these decisions are reviewed, parser implementation should follow this document as the H1.2 baseline and isolate any change behind tests rather than broadening the grammar ad hoc.
