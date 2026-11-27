@@ -1,4 +1,5 @@
 mod authority;
+mod control_evidence;
 mod lexer;
 mod policy_gate;
 mod rulebook;
@@ -6,6 +7,7 @@ mod token;
 
 use std::{env, fs, process::ExitCode};
 use authority::{verify_signed_bundle, verify_signed_registry, verify_update};
+use control_evidence::verify_control_evidence;
 use lexer::Lexer;
 use policy_gate::{Gate, authorize_gate};
 use rulebook::{RecordKind, validate};
@@ -66,7 +68,16 @@ fn run_rulebook(args: &[String]) -> ExitCode {
             };
             match authorize_gate(&envelope,&registry,gate) {
                 Ok(permit)=>{
-                    println!("PERMITTED: gate={} rulebook={} rules={}",permit.gate.as_str(),permit.rulebook_version,permit.rule_ids.join(","));
+                    let payload = match envelope.get("payload") {
+                        Some(v) => v,
+                        None => { eprintln!("DENIED: signed Rulebook payload is missing"); return ExitCode::FAILURE; }
+                    };
+                    let controls = match verify_control_evidence(payload,gate) {
+                        Ok(ids) => ids,
+                        Err(e) => { eprintln!("DENIED: control evidence: {e}"); return ExitCode::FAILURE; }
+                    };
+                    println!("PERMITTED: gate={} rulebook={} rules={} controls={}",
+                        permit.gate.as_str(),permit.rulebook_version,permit.rule_ids.join(","),controls.join(","));
                     ExitCode::SUCCESS
                 },
                 Err(e)=>{eprintln!("DENIED: {}",e);ExitCode::FAILURE}

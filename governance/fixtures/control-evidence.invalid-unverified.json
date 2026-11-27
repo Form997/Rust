@@ -1,0 +1,11 @@
+{
+  "control_id":"AL-CTRL-COMPILER-001",
+  "gate":"compiler",
+  "status":"implemented",
+  "verification_status":"not_verified",
+  "owner":"compiler-maintainers",
+  "scope":"compiler policy preflight",
+  "last_verified_at":"2026-11-27T00:00:00Z",
+  "test_ids":["IT-COMPILER-POLICY-001"],
+  "evidence_ids":["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
+}
