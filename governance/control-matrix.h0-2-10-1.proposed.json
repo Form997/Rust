@@ -1,0 +1,226 @@
+{
+  "schema_version": "1.0.0",
+  "matrix_id": "AL-H0.2.10.1",
+  "status": "proposed",
+  "rulebook_authority": "Only the owner-designated human authority may approve, sign and publish official Rulebook policy. This matrix is a proposal until explicitly approved.",
+  "decision_values": [
+    "ALLOW",
+    "DENY",
+    "REVIEW"
+  ],
+  "evidence_levels": [
+    {
+      "level": "E0",
+      "name": "Assertion",
+      "meaning": "A record states that a control passed.",
+      "limitations": "No independent verification."
+    },
+    {
+      "level": "E1",
+      "name": "Reproducible local check",
+      "meaning": "Command, inputs and output are retained to repeat a check.",
+      "limitations": "Local environment and operator remain in the trust boundary."
+    },
+    {
+      "level": "E2",
+      "name": "CI-bound evidence",
+      "meaning": "Run and job identity, repository and commit are checked against CI metadata.",
+      "limitations": "Depends on configured CI provider and workflow trust."
+    },
+    {
+      "level": "E3",
+      "name": "Cryptographically attested artifact",
+      "meaning": "Artifact digest and signer/workflow identity are verified under a declared external trust model.",
+      "limitations": "Does not prove scientific truth, legal rights or human policy approval."
+    },
+    {
+      "level": "E4",
+      "name": "Independent review or witness",
+      "meaning": "Evidence is checked in a separately governed trust domain.",
+      "limitations": "Independence and review scope must be documented; not an absolute guarantee."
+    }
+  ],
+  "subsystems": [
+    {
+      "id": "source-compiler",
+      "name": "AL source, parser and compiler",
+      "boundary": "Parse, type-check and compile source.",
+      "checks": [
+        "Language version and grammar contract",
+        "Safety rules and prohibited constructs",
+        "Compiler compatibility"
+      ],
+      "evidence": [
+        "Source digest",
+        "Compiler version and diagnostics",
+        "Control evaluation record"
+      ],
+      "failure_disposition": "DENY invalid or prohibited source; REVIEW unresolved compatibility.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "package-dependencies",
+      "name": "Package and dependency resolver",
+      "boundary": "Resolve dependencies and assemble packages.",
+      "checks": [
+        "Approved source and licence status",
+        "Integrity and version constraints",
+        "Vulnerability policy"
+      ],
+      "evidence": [
+        "Lockfile and package digests",
+        "Provenance and licence records",
+        "Scan result"
+      ],
+      "failure_disposition": "DENY integrity or licence failure; REVIEW unknown provenance.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "runtime-execution",
+      "name": "Runtime and execution engine",
+      "boundary": "Load and execute AL programs.",
+      "checks": [
+        "Runtime policy",
+        "Capability grants and operation permissions",
+        "Sandbox profile"
+      ],
+      "evidence": [
+        "Program digest and runtime build",
+        "Capability manifest",
+        "Sandbox decision and execution audit"
+      ],
+      "failure_disposition": "DENY absent capability or failed sandbox; REVIEW unknown policy.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "ai-inference",
+      "name": "AI inference and assistant",
+      "boundary": "Generate, explain or transform AL content.",
+      "checks": [
+        "Model-use policy and data boundary",
+        "Safety constraints",
+        "Output validation before execution"
+      ],
+      "evidence": [
+        "Model and version identity",
+        "Output digest",
+        "Validator result"
+      ],
+      "failure_disposition": "Treat output as untrusted; DENY execution until validated; REVIEW policy ambiguity.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "dataset-pipeline",
+      "name": "Dataset ingestion and preparation",
+      "boundary": "Import, clean, transform or export data.",
+      "checks": [
+        "Provenance and licence",
+        "Consent or privacy basis",
+        "Purpose, retention and minimization"
+      ],
+      "evidence": [
+        "Dataset manifest and source records",
+        "Licence evidence",
+        "Transformation lineage and privacy review"
+      ],
+      "failure_disposition": "DENY prohibited or unlicensed use; REVIEW uncertain rights or basis.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "model-training",
+      "name": "Training, fine-tuning and evaluation",
+      "boundary": "Train, tune, select or evaluate models.",
+      "checks": [
+        "Approved dataset set and training protocol",
+        "Metric definitions and approved thresholds",
+        "Compute and safety constraints"
+      ],
+      "evidence": [
+        "Training-run manifest",
+        "Dataset, code and config digests",
+        "Metric cards, logs and evaluation report"
+      ],
+      "failure_disposition": "DENY unapproved inputs or failed mandatory metrics; REVIEW unset thresholds.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "scientific-modules",
+      "name": "Scientific and agronomy modules",
+      "boundary": "Calculate, simulate or publish scientific outputs.",
+      "checks": [
+        "Domain assumptions and units",
+        "Model version and validation protocol",
+        "Uncertainty and evidence requirements"
+      ],
+      "evidence": [
+        "Formula/model version",
+        "Input provenance and units",
+        "Test datasets and validation report"
+      ],
+      "failure_disposition": "DENY dimensional or validation failure; REVIEW unsupported assumptions.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "build-release",
+      "name": "Build, CI and release",
+      "boundary": "Build binaries, images, installers and publish releases.",
+      "checks": [
+        "Signed policy and required tests",
+        "Dependency integrity",
+        "Artifact provenance and release controls"
+      ],
+      "evidence": [
+        "Commit and workflow/job identity",
+        "Test results and artifact digest",
+        "Attestation"
+      ],
+      "failure_disposition": "DENY failed or unverifiable release gate.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "rulebook-update-center",
+      "name": "Rulebook Update Center",
+      "boundary": "Discover, stage, approve, publish or roll back policy.",
+      "checks": [
+        "Source classification and applicability",
+        "Impact assessment and owner approval",
+        "Signature, version and rollback integrity"
+      ],
+      "evidence": [
+        "Source snapshots and diffs",
+        "Impact report and approval record",
+        "Signature and audit chain"
+      ],
+      "failure_disposition": "DENY unauthorized publication; REVIEW disputed or unverified source.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    },
+    {
+      "id": "audit-trust",
+      "name": "Audit, evidence and trust services",
+      "boundary": "Record, verify or consume evidence.",
+      "checks": [
+        "Signature and digest",
+        "Expiry and revocation",
+        "Audit-chain continuity and trust-root validity"
+      ],
+      "evidence": [
+        "Signed envelopes and evidence manifests",
+        "Audit records",
+        "External attestations where required"
+      ],
+      "failure_disposition": "DENY tampering or revocation; REVIEW unavailable or stale trust anchor.",
+      "control_ids": [],
+      "mapping_status": "pending"
+    }
+  ],
+  "unknowns_policy": "NOT_SET; do not infer or invent thresholds."
+}
