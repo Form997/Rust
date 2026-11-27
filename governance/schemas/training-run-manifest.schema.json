@@ -309,5 +309,49 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "run_type": {
+            "enum": [
+              "training",
+              "fine_tuning"
+            ]
+          }
+        },
+        "required": [
+          "run_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "rulebook": {
+            "properties": {
+              "status": {
+                "const": "approved"
+              }
+            }
+          },
+          "dataset": {
+            "items": {
+              "properties": {
+                "license_status": {
+                  "const": "verified"
+                }
+              }
+            }
+          },
+          "governance_review": {
+            "properties": {
+              "state": {
+                "const": "approved"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
