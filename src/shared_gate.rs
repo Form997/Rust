@@ -105,12 +105,22 @@ fn review(request: &GateRequest, code: &str, explanation: String) -> GateDecisio
     result
 }
 
-/// trusted_registry must have been verified against the separately pinned root
-/// using authority::verify_signed_registry before it is passed here.
+/// A registry whose root signature and out-of-band root fingerprint were verified.
+#[derive(Debug, Clone)]
+pub struct VerifiedRegistry { payload: Value }
+impl VerifiedRegistry {
+    pub fn from_signed(envelope: &Value, pinned_root_fingerprint: &str) -> Result<Self, GateApiError> {
+        let payload = verify_signed_registry(envelope, pinned_root_fingerprint)
+            .map_err(|e| GateApiError(format!("trust registry verification failed: {e}")))?;
+        Ok(Self { payload })
+    }
+    fn as_value(&self) -> &Value { &self.payload }
+}
+
 pub fn evaluate_gate(
     request: &GateRequest,
     envelope: &Value,
-    trusted_registry: &Value,
+    trusted_registry: &VerifiedRegistry,
 ) -> Result<GateDecision, GateApiError> {
     if !valid_identifier(&request.decision_id) || !valid_identifier(&request.subsystem) ||
         !valid_identifier(&request.operation) || !valid_identifier(&request.subject_type) ||
