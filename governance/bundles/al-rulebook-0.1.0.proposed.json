@@ -1,21 +1,32 @@
 {
-  "$schema": "../../schemas/al-rulebook-bundle.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "schema_version": "0.1.0",
   "bundle_id": "al-rulebook-0.1.0-proposed",
   "rulebook_version": "0.1.0",
   "status": "proposed",
   "created_at": "2026-11-27T00:00:00Z",
   "effective_at": null,
-  "scope": ["AL language", "AL Local AI", "datasets", "training", "evaluation", "security"],
+  "scope": [
+    "AL language",
+    "AL Local AI",
+    "datasets",
+    "training",
+    "evaluation",
+    "security"
+  ],
   "sources": [],
   "rules": [
     {
       "rule_id": "AL-GOV-001",
       "status": "proposed",
       "title": "Rulebook governance charter",
-      "scope": ["project governance"],
+      "scope": [
+        "project governance"
+      ],
       "source_ids": [],
-      "control_ids": ["GOV-DECISION-GATE"]
+      "control_ids": [
+        "GOV-DECISION-GATE"
+      ]
     }
   ],
   "metrics": [],
