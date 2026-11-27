@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://haidat.dev/al/schemas/signed-root-registry.schema.json",
+  "title": "AL Root-Signed Rulebook Trust Registry Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "algorithm",
+    "root_public_key_base64",
+    "payload",
+    "signature_base64"
+  ],
+  "properties": {
+    "algorithm": {
+      "const": "Ed25519"
+    },
+    "root_public_key_base64": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]{43}=$"
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "registry_version",
+        "keys"
+      ],
+      "properties": {
+        "registry_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "authorized-signers.schema.json#/$defs/signer"
+          }
+        }
+      }
+    },
+    "signature_base64": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]{86}==$"
+    }
+  }
+}
