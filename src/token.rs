@@ -2,10 +2,20 @@ use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Span {
-    /// Zero-based character offset in the source.
+    /// Inclusive UTF-8 byte offset from the beginning of the source.
     pub start: usize,
-    /// Exclusive zero-based character offset in the source.
+    /// Exclusive UTF-8 byte offset from the beginning of the source.
     pub end: usize,
+}
+
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.start == self.end
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,10 +48,7 @@ pub struct Token {
 
 impl Token {
     pub fn new(kind: TokenKind, start: usize, end: usize) -> Self {
-        Self {
-            kind,
-            span: Span { start, end },
-        }
+        Self { kind, span: Span { start, end } }
     }
 }
 
