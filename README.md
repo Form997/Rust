@@ -202,3 +202,13 @@ Evidence records are signed assertions and references, not proof that a producti
 - See `governance/H0.2.9-TRUSTED-ATTESTATION-AUDIT-ANCHOR.md`.
 
 These H0.2.8/H0.2.9 additions remain development-branch work until reviewed, tested and merged. Attestation proves provenance under the configured trust model, not scientific correctness, legal authority or absolute immunity to repository/workflow compromise.
+
+
+## H0.2.10.2 — Shared Rulebook Gate API (implementation candidate)
+
+- `src/shared_gate.rs` — typed request/decision contract, root-verified trust registry wrapper, operation allowlists, signed Rulebook verification and evidence binding.
+- `governance/schemas/gate-request.schema.json` and `gate-decision.schema.json` — machine-readable request and decision contracts.
+- `governance/H0.2.10.2-SHARED-RULEBOOK-GATE-API.md` — trust boundaries, CLI, supported gates, acceptance criteria and limitations.
+- CLI entry: `al rulebook gate-evaluate ...`.
+
+This phase currently supports the seven existing gate identifiers: compiler, runtime, AI, training, evaluation, scientific and release. Package/dependency, dataset, Rulebook Update Center and audit/trust adapters remain pending. The API is not yet integrated into live subsystem operations, and an ALLOW is not safe to act upon until production audit persistence is coupled to the operation. CI and owner/security review are required before this candidate is accepted.
