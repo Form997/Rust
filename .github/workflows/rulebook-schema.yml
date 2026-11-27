@@ -60,3 +60,22 @@ jobs:
             exit 1
           fi
           echo "Expected rejection confirmed."
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Rust unit tests
+        run: cargo test --all-targets
+
+      - name: Smoke-test Rust Rulebook CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo run --quiet -- rulebook validate metric-card governance/fixtures/metric-card.proposed.json
+          cargo run --quiet -- rulebook validate source-record governance/fixtures/source-record.unverified.json
+          cargo run --quiet -- rulebook validate decision-record governance/fixtures/decision-record.proposed.json
+          cargo run --quiet -- rulebook validate training-run-manifest governance/fixtures/training-run-manifest.evaluation-only.json
+          if cargo run --quiet -- rulebook validate metric-card governance/fixtures/invalid-metric-card-approved-without-threshold.json; then
+            echo "ERROR: Rust validator accepted an invalid metric card."
+            exit 1
+          fi
