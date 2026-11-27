@@ -133,3 +133,21 @@ H0.2.2 adds machine-readable JSON Schema contracts and example fixtures for:
 - `governance/schemas/training-run-manifest.schema.json` — pinned Rulebook/metric versions, dataset provenance and checksums, code commit, configuration, seeds, environment and artifacts.
 
 The CI workflow validates every schema meta-structure, all positive fixtures and deliberate negative fixtures. A schema pass proves structural conformity only; it does not prove a source is authentic, a metric scientifically valid, dataset use lawful, or a decision approved. Example records remain proposed/unverified/evaluation-only. No threshold is invented.
+
+
+## H0.2.3 — Rust Rulebook Validator (draft)
+
+The Rust CLI now has a separate Rulebook validation path while preserving the existing AL source lexer invocation:
+
+```sh
+cargo run -- rulebook validate metric-card governance/fixtures/metric-card.proposed.json
+cargo run -- rulebook validate source-record governance/fixtures/source-record.unverified.json
+cargo run -- rulebook validate decision-record governance/fixtures/decision-record.proposed.json
+cargo run -- rulebook validate training-run-manifest governance/fixtures/training-run-manifest.evaluation-only.json
+```
+
+Supported record kinds: `bundle`, `metric-card`, `source-record`, `decision-record`, and `training-run-manifest`. The validator returns a non-zero process exit code for errors, prints warnings separately, and includes unit tests for valid fixtures and rejected governance states.
+
+The Rust validator enforces selected governance invariants: an approved metric threshold needs a value and evidence IDs; verified sources need HTTPS URLs and a review date; approved decisions need an approved approval state, approver and timestamp; training/fine-tuning requires an approved Rulebook, verified dataset-rights status and approved governance review. Unverified sources remain warnings rather than being silently treated as authoritative.
+
+JSON Schema CI remains the structural contract check. Rust validation is an additional semantic gate, not a substitute for official-source verification, cryptographic checksum verification, legal review, scientific validation or human approval. It does not execute AL programs or grant permissions.
