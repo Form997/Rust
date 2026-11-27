@@ -70,7 +70,7 @@ impl<'a> SourceMap<'a> {
         let start = self.line_starts[one_based_line - 1];
         let end = self.line_starts.get(one_based_line).copied().unwrap_or(self.source.len());
         let text = &self.source[start..end];
-        Some(text.trim_end_matches(['\\r', '\\n']))
+        Some(text.trim_end_matches(|ch| ch == '\\r' || ch == '\\n'))
     }
 
     pub fn slice(&self, span: Span) -> Option<&'a str> {
