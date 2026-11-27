@@ -25,9 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install JSON Schema validator
@@ -101,7 +101,7 @@ jobs:
           check-jsonschema --schemafile governance/schemas/audit-anchor.schema.json /tmp/al-audit-anchor.json
 
       - name: Attest the audit anchor
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: /tmp/al-audit-anchor.json
 
