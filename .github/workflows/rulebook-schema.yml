@@ -81,6 +81,8 @@ jobs:
           printf 'release artifact smoke test\n' > /tmp/al-release-artifact.bin
           printf '["E-RELEASE-001"]\n' > /tmp/al-release-evidence-refs.json
           if cargo run --quiet -- rulebook release-gate build /tmp/al-release-artifact.bin 2026-11-27T10:00:00Z release-ci-smoke 0.2.10.3 /tmp/al-release-evidence-refs.json governance/fixtures/rulebook-envelope.untrusted.json governance/fixtures/signed-root-registry.example.json 0000000000000000000000000000000000000000000000000000000000000000; then exit 1; fi
+          if cargo run --quiet -- rulebook release-gate deploy_arbitrary /tmp/al-release-artifact.bin 2026-11-27T10:00:00Z release-invalid-operation 0.2.10.3 /tmp/al-release-evidence-refs.json governance/fixtures/rulebook-envelope.untrusted.json governance/fixtures/signed-root-registry.example.json 0000000000000000000000000000000000000000000000000000000000000000; then exit 1; fi
+          if cargo run --quiet -- rulebook release-gate build /tmp/al-release-artifact-missing.bin 2026-11-27T10:00:00Z release-missing-artifact 0.2.10.3 /tmp/al-release-evidence-refs.json governance/fixtures/rulebook-envelope.untrusted.json governance/fixtures/signed-root-registry.example.json 0000000000000000000000000000000000000000000000000000000000000000; then exit 1; fi
           printf 'audit test\n' > /tmp/al-evidence-artifact.bin
           digest=$(sha256sum /tmp/al-evidence-artifact.bin | cut -d ' ' -f 1)
           sed "s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/$digest/" governance/fixtures/evidence-manifest.example.json > /tmp/al-evidence-manifest.json
