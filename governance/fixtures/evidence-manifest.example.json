@@ -1,0 +1,6 @@
+{
+  "evidence_id":"EV-FIXTURE-ONLY-001",
+  "artifact":{"path":"target/release/al","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+  "ci":{"repository":"Form997/Rust","commit_sha":"0123456789012345678901234567890123456789","run_id":123456789,"job_id":987654321,"workflow":"Rulebook schema validation","conclusion":"success","run_url":"https://github.com/Form997/Rust/actions/runs/123456789","observed_at":"2026-11-27T10:00:00Z","source":"github-actions-api-export"},
+  "expires_at":"2026-12-01T00:00:00Z","revoked_at":null,"revocation_reason":""
+}

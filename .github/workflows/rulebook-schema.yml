@@ -22,28 +22,22 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install JSON Schema validator
         run: python -m pip install --disable-pip-version-check check-jsonschema
-
       - name: Validate all governance schemas
         shell: bash
         run: |
           set -euo pipefail
-          for schema in governance/schemas/*.schema.json; do
-            echo "Checking schema: $schema"
-            check-jsonschema --check-metaschema "$schema"
-          done
+          for schema in governance/schemas/*.schema.json; do check-jsonschema --check-metaschema "$schema"; done
           check-jsonschema --schemafile governance/schemas/authorized-signers.schema.json governance/trust/authorized-signers.example.json
           check-jsonschema --schemafile governance/schemas/signed-rulebook-envelope.schema.json governance/fixtures/rulebook-envelope.untrusted.json
           check-jsonschema --schemafile governance/schemas/signed-root-registry.schema.json governance/fixtures/signed-root-registry.example.json
           check-jsonschema --schemafile governance/schemas/control-evidence.schema.json governance/fixtures/control-evidence.verified.json
-
+          check-jsonschema --schemafile governance/schemas/evidence-manifest.schema.json governance/fixtures/evidence-manifest.example.json
       - name: Validate positive fixtures
         shell: bash
         run: |
@@ -53,32 +47,18 @@ jobs:
           check-jsonschema --schemafile governance/schemas/source-record.schema.json governance/fixtures/source-record.unverified.json
           check-jsonschema --schemafile governance/schemas/decision-record.schema.json governance/fixtures/decision-record.proposed.json
           check-jsonschema --schemafile governance/schemas/training-run-manifest.schema.json governance/fixtures/training-run-manifest.evaluation-only.json
-
       - name: Confirm negative fixtures are rejected
         shell: bash
         run: |
           set -euo pipefail
-          if check-jsonschema --schemafile governance/schemas/al-rulebook-bundle.schema.json governance/fixtures/invalid-rulebook-missing-required.json; then
-            echo "ERROR: invalid Rulebook bundle unexpectedly passed."
-            exit 1
-          fi
-          if check-jsonschema --schemafile governance/schemas/metric-card.schema.json governance/fixtures/invalid-metric-card-approved-without-threshold.json; then
-            echo "ERROR: invalid metric card unexpectedly passed."
-            exit 1
-          fi
-          if check-jsonschema --schemafile governance/schemas/control-evidence.schema.json governance/fixtures/control-evidence.invalid-unverified.json; then
-            echo "ERROR: invalid control evidence unexpectedly passed."
-            exit 1
-          fi
-          echo "Expected rejection confirmed."
-
+          if check-jsonschema --schemafile governance/schemas/al-rulebook-bundle.schema.json governance/fixtures/invalid-rulebook-missing-required.json; then exit 1; fi
+          if check-jsonschema --schemafile governance/schemas/metric-card.schema.json governance/fixtures/invalid-metric-card-approved-without-threshold.json; then exit 1; fi
+          if check-jsonschema --schemafile governance/schemas/control-evidence.schema.json governance/fixtures/control-evidence.invalid-unverified.json; then exit 1; fi
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
-
       - name: Run Rust unit tests
         run: cargo test --all-targets
-
-      - name: Smoke-test Rust Rulebook CLI
+      - name: Smoke-test Rulebook CLI
         shell: bash
         run: |
           set -euo pipefail
@@ -86,19 +66,13 @@ jobs:
           cargo run --quiet -- rulebook validate source-record governance/fixtures/source-record.unverified.json
           cargo run --quiet -- rulebook validate decision-record governance/fixtures/decision-record.proposed.json
           cargo run --quiet -- rulebook validate training-run-manifest governance/fixtures/training-run-manifest.evaluation-only.json
-          if cargo run --quiet -- rulebook validate metric-card governance/fixtures/invalid-metric-card-approved-without-threshold.json; then
-            echo "ERROR: Rust validator accepted an invalid metric card."
-            exit 1
-          fi
-          if cargo run --quiet -- rulebook verify-signed governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json; then
-            echo "ERROR: Rust verifier accepted an untrusted Rulebook signer."
-            exit 1
-          fi
-          if cargo run --quiet -- rulebook verify-registry governance/fixtures/signed-root-registry.example.json 0000000000000000000000000000000000000000000000000000000000000000; then
-            echo "ERROR: Rust verifier accepted an unpinned root key."
-            exit 1
-          fi
-          if cargo run --quiet -- rulebook gate compiler governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json 0000000000000000000000000000000000000000000000000000000000000000; then
-            echo "ERROR: Rulebook gate accepted an untrusted root registry."
-            exit 1
-          fi
+          if cargo run --quiet -- rulebook validate metric-card governance/fixtures/invalid-metric-card-approved-without-threshold.json; then exit 1; fi
+          if cargo run --quiet -- rulebook verify-signed governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json; then exit 1; fi
+          if cargo run --quiet -- rulebook verify-registry governance/fixtures/signed-root-registry.example.json 0000000000000000000000000000000000000000000000000000000000000000; then exit 1; fi
+          if cargo run --quiet -- rulebook gate compiler governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json 0000000000000000000000000000000000000000000000000000000000000000; then exit 1; fi
+          printf 'audit test\n' > /tmp/al-evidence-artifact.bin
+          digest=$(sha256sum /tmp/al-evidence-artifact.bin | cut -d ' ' -f 1)
+          sed "s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/$digest/" governance/fixtures/evidence-manifest.example.json > /tmp/al-evidence-manifest.json
+          cargo run --quiet -- rulebook evidence-verify /tmp/al-evidence-manifest.json /tmp/al-evidence-artifact.bin Form997/Rust 2026-11-27T11:00:00Z
+          cargo run --quiet -- rulebook audit-append /tmp/al-audit.jsonl governance/fixtures/audit-event.example.json
+          cargo run --quiet -- rulebook audit-verify /tmp/al-audit.jsonl

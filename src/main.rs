@@ -1,13 +1,15 @@
 mod authority;
 mod control_evidence;
+mod evidence_audit;
 mod lexer;
 mod policy_gate;
 mod rulebook;
 mod token;
 
-use std::{env, fs, process::ExitCode};
+use std::{env, fs, path::Path, process::ExitCode};
 use authority::{verify_signed_bundle, verify_signed_registry, verify_update};
 use control_evidence::verify_control_evidence;
+use evidence_audit::{append_audit_event, verify_audit_chain, verify_evidence};
 use lexer::Lexer;
 use policy_gate::{Gate, authorize_gate};
 use rulebook::{RecordKind, validate};
@@ -22,7 +24,10 @@ fn print_usage() {
     eprintln!("  al rulebook verify-registry <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("  al rulebook verify-update <current-payload.json> <candidate-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("  al rulebook compare <current-payload.json> <candidate-payload.json>");
-    eprintln!("  al rulebook gate <compiler|runtime|ai|training|evaluation|scientific|release> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
+    eprintln!("  al rulebook gate <gate> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
+    eprintln!("  al rulebook evidence-verify <manifest.json> <artifact-file> <owner/repo> <now-utc>");
+    eprintln!("  al rulebook audit-append <ledger.jsonl> <event.json>");
+    eprintln!("  al rulebook audit-verify <ledger.jsonl>");
     eprintln!("The root fingerprint must come from separately protected deployment configuration.");
 }
 fn read_json(path: &str) -> Result<Value,String> {
@@ -31,6 +36,26 @@ fn read_json(path: &str) -> Result<Value,String> {
 }
 fn run_rulebook(args: &[String]) -> ExitCode {
     match args.get(1).map(String::as_str) {
+        Some("evidence-verify") if args.len()==6 => {
+            let manifest=match read_json(&args[2]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
+            match verify_evidence(&manifest,Path::new(&args[3]),&args[4],&args[5]) {
+                Ok(message)=>{println!("EVIDENCE VERIFIED: {message}");ExitCode::SUCCESS},
+                Err(e)=>{eprintln!("EVIDENCE DENIED: {e}");ExitCode::FAILURE}
+            }
+        }
+        Some("audit-append") if args.len()==4 => {
+            let event=match read_json(&args[3]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
+            match append_audit_event(Path::new(&args[2]),&event) {
+                Ok(hash)=>{println!("AUDIT APPENDED: record_hash={hash}");ExitCode::SUCCESS},
+                Err(e)=>{eprintln!("AUDIT DENIED: {e}");ExitCode::FAILURE}
+            }
+        }
+        Some("audit-verify") if args.len()==3 => {
+            match verify_audit_chain(Path::new(&args[2])) {
+                Ok(count)=>{println!("AUDIT VALID: {count} record(s)");ExitCode::SUCCESS},
+                Err(e)=>{eprintln!("AUDIT INVALID: {e}");ExitCode::FAILURE}
+            }
+        }
         Some("verify-registry") if args.len()==4 => {
             let envelope=match read_json(&args[2]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
             match verify_signed_registry(&envelope,&args[3]) {
@@ -57,27 +82,15 @@ fn run_rulebook(args: &[String]) -> ExitCode {
             }
         }
         Some("gate") if args.len()==6 => {
-            let Some(gate)=Gate::parse(&args[2]) else {
-                eprintln!("DENIED: unknown subsystem gate '{}'",args[2]);
-                return ExitCode::from(2);
-            };
+            let Some(gate)=Gate::parse(&args[2]) else {eprintln!("DENIED: unknown subsystem gate '{}'",args[2]);return ExitCode::from(2);};
             let envelope=match read_json(&args[3]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
             let signed_registry=match read_json(&args[4]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
-            let registry=match verify_signed_registry(&signed_registry,&args[5]) {
-                Ok(v)=>v,Err(e)=>{eprintln!("DENIED: trust registry: {e}");return ExitCode::FAILURE;}
-            };
+            let registry=match verify_signed_registry(&signed_registry,&args[5]) {Ok(v)=>v,Err(e)=>{eprintln!("DENIED: trust registry: {e}");return ExitCode::FAILURE;}};
             match authorize_gate(&envelope,&registry,gate) {
                 Ok(permit)=>{
-                    let payload = match envelope.get("payload") {
-                        Some(v) => v,
-                        None => { eprintln!("DENIED: signed Rulebook payload is missing"); return ExitCode::FAILURE; }
-                    };
-                    let controls = match verify_control_evidence(payload,gate) {
-                        Ok(ids) => ids,
-                        Err(e) => { eprintln!("DENIED: control evidence: {e}"); return ExitCode::FAILURE; }
-                    };
-                    println!("PERMITTED: gate={} rulebook={} rules={} controls={}",
-                        permit.gate.as_str(),permit.rulebook_version,permit.rule_ids.join(","),controls.join(","));
+                    let payload=match envelope.get("payload"){Some(v)=>v,None=>{eprintln!("DENIED: signed Rulebook payload is missing");return ExitCode::FAILURE;}};
+                    let controls=match verify_control_evidence(payload,gate){Ok(ids)=>ids,Err(e)=>{eprintln!("DENIED: control evidence: {e}");return ExitCode::FAILURE;}};
+                    println!("PERMITTED: gate={} rulebook={} rules={} controls={}",permit.gate.as_str(),permit.rulebook_version,permit.rule_ids.join(","),controls.join(","));
                     ExitCode::SUCCESS
                 },
                 Err(e)=>{eprintln!("DENIED: {}",e);ExitCode::FAILURE}

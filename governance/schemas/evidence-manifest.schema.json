@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://haidat.example/schemas/al-evidence-manifest.schema.json",
+  "title":"AL Evidence Verification Manifest","type":"object","additionalProperties":false,
+  "required":["evidence_id","artifact","ci","expires_at","revoked_at"],
+  "properties":{
+    "evidence_id":{"type":"string","minLength":1},
+    "artifact":{"type":"object","additionalProperties":false,"required":["path","sha256"],"properties":{"path":{"type":"string","minLength":1},"sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"}}},
+    "ci":{"type":"object","additionalProperties":false,"required":["repository","commit_sha","run_id","job_id","workflow","conclusion","run_url","observed_at","source"],"properties":{
+      "repository":{"type":"string","minLength":3},"commit_sha":{"type":"string","pattern":"^[a-fA-F0-9]{40}$"},
+      "run_id":{"type":"integer","minimum":1},"job_id":{"type":"integer","minimum":1},"workflow":{"type":"string","minLength":1},
+      "conclusion":{"const":"success"},"run_url":{"type":"string","format":"uri"},"observed_at":{"type":"string","format":"date-time"},
+      "source":{"enum":["github-actions-api-export","trusted-ci-collector"]}}},
+    "expires_at":{"type":"string","format":"date-time"},"revoked_at":{"type":["string","null"],"format":"date-time"},
+    "revocation_reason":{"type":"string"}
+  }
+}
