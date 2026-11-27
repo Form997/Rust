@@ -91,6 +91,10 @@ The example is currently a source-language design sample. Version 0.1.0 tokenize
 MIT. See [LICENSE](LICENSE).
 
 
+## H1 implementation
+
+- [H1.1 — SourceMap, UTF-8 spans and diagnostics](docs/H1.1-SOURCEMAP-DIAGNOSTICS.md) — canonical byte offsets, source locations, structured diagnostics and Unicode/line-ending tests. This slice is on the H1 feature branch pending validation and review.
+
 ## H0.1 technical completion pack
 
 - docs/H0.1-COMPLETION-REPORT.md — completion report, inspected source boundary and deferred work.
