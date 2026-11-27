@@ -94,6 +94,7 @@ MIT. See [LICENSE](LICENSE).
 ## H1 implementation
 
 - [H1.1 — SourceMap, UTF-8 spans and diagnostics](docs/H1.1-SOURCEMAP-DIAGNOSTICS.md) — canonical byte offsets, source locations, structured diagnostics and Unicode/line-ending tests. This slice is on the H1 feature branch pending validation and review.
+- [H1.2 — AL 0.1 grammar lock](specification/AL-0.1-GRAMMAR.md) — conservative EBNF parser contract, reserved-but-undefined constructs, scope limits and required conformance cases. This is a proposed grammar baseline; unresolved design choices are listed explicitly.
 
 ## H0.1 technical completion pack
 
