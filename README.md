@@ -151,3 +151,10 @@ Supported record kinds: `bundle`, `metric-card`, `source-record`, `decision-reco
 The Rust validator enforces selected governance invariants: an approved metric threshold needs a value and evidence IDs; verified sources need HTTPS URLs and a review date; approved decisions need an approved approval state, approver and timestamp; training/fine-tuning requires an approved Rulebook, verified dataset-rights status and approved governance review. Unverified sources remain warnings rather than being silently treated as authoritative.
 
 JSON Schema CI remains the structural contract check. Rust validation is an additional semantic gate, not a substitute for official-source verification, cryptographic checksum verification, legal review, scientific validation or human approval. It does not execute AL programs or grant permissions.
+
+
+## Rulebook Authority
+
+- H0.2.4 adds Ed25519 verification for human-approved Rulebook envelopes. See [`governance/H0.2.4-CORE-AUTHORITY.md`](governance/H0.2.4-CORE-AUTHORITY.md).
+- Verify a signed envelope with `cargo run -- rulebook verify-signed envelope.json trusted-keys.json`.
+- The example trusted-key registry is intentionally empty. Production trust roots must be anchored outside the mutable repository; this phase does not yet implement production key custody or bundle activation.
