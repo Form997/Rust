@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://form997.github.io/Rust/governance/schemas/al-rulebook-bundle.schema.json",
+  "title": "AL Rulebook Bundle Manifest",
+  "description": "Manifest contract for a versioned AL rulebook bundle. This schema validates metadata, not the truth or legal applicability of referenced requirements.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "bundle_id", "rulebook_version", "status", "created_at", "scope", "sources", "rules", "approval"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1.0" },
+    "bundle_id": { "type": "string", "minLength": 1 },
+    "rulebook_version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "status": { "type": "string", "enum": ["proposed", "verified", "approved", "deprecated", "withdrawn", "blocked"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "effective_at": { "type": ["string", "null"], "format": "date-time" },
+    "scope": { "type": "array", "minItems": 1, "items": { "type": "string" }, "uniqueItems": true },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "issuing_body", "title", "instrument_type", "status", "official_url", "verification_status"],
+        "properties": {
+          "source_id": { "type": "string", "minLength": 1 },
+          "issuing_body": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "instrument_type": { "type": "string", "enum": ["law", "regulation", "treaty", "standard", "technical_specification", "recommendation", "guidance", "other"] },
+          "identifier_edition": { "type": ["string", "null"] },
+          "jurisdiction": { "type": "string", "minLength": 1 },
+          "publication_date": { "type": ["string", "null"], "format": "date" },
+          "effective_date": { "type": ["string", "null"], "format": "date" },
+          "status": { "type": "string", "enum": ["current", "amended", "withdrawn", "superseded", "draft", "unknown"] },
+          "official_url": { "type": "string", "format": "uri" },
+          "verification_status": { "type": "string", "enum": ["unverified", "verified_official_source", "blocked"] },
+          "adoption_status_vn": { "type": "string", "enum": ["adopted", "partially_adopted", "not_adopted", "not_applicable", "unverified"] },
+          "reviewed_at": { "type": ["string", "null"], "format": "date" },
+          "next_review": { "type": ["string", "null"], "format": "date" }
+        }
+      }
+    },
+    "rules": { "type": "array", "items": { "type": "object", "required": ["rule_id", "status", "title", "scope"], "properties": {
+      "rule_id": { "type": "string", "pattern": "^AL-[A-Z0-9-]+$" },
+      "status": { "type": "string", "enum": ["proposed", "verified", "approved", "deprecated", "withdrawn", "blocked"] },
+      "title": { "type": "string", "minLength": 1 },
+      "scope": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+      "source_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+      "control_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+    }, "additionalProperties": false } },
+    "metrics": { "type": "array", "items": { "type": "string" } },
+    "compatibility": { "type": "object", "additionalProperties": { "type": "string" } },
+    "content_checksum": { "type": ["string", "null"], "pattern": "^(sha256:)?[a-fA-F0-9]{64}$" },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state"],
+      "properties": {
+        "state": { "type": "string", "enum": ["not_requested", "pending", "approved", "rejected", "revoked"] },
+        "approver": { "type": ["string", "null"] },
+        "approved_at": { "type": ["string", "null"], "format": "date-time" },
+        "decision_record": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
