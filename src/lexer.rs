@@ -255,4 +255,12 @@ OUTPUT count
         let tokens = Lexer::new("OUTPUT x\r\nEND").tokenize().unwrap();
         assert_eq!(tokens.iter().filter(|t| t.kind == TokenKind::Newline).count(), 1);
     }
+
+    #[test]
+    fn lexical_error_position_is_a_utf8_byte_offset() {
+        let source = "OUTPUT \"á\" @";
+        let error = Lexer::new(source).tokenize().expect_err("unexpected symbol");
+        assert_eq!(error.position, source.find('@').unwrap());
+        assert!(source.is_char_boundary(error.position));
+    }
 }
