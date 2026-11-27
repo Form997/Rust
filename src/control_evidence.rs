@@ -83,7 +83,7 @@ mod tests {
     #[test] fn accepts_resolved_verified_control() { assert_eq!(verify_control_evidence(&payload(),Gate::Compiler).unwrap(),vec!["C-1"]); }
     #[test] fn rejects_missing_catalogue() { let mut p=payload(); p.as_object_mut().unwrap().remove("control_evidence"); assert!(verify_control_evidence(&p,Gate::Compiler).unwrap_err().0.contains("catalogue")); }
     #[test] fn rejects_unresolved_control_id() { let mut p=payload(); p["control_evidence"]=json!([]); assert!(verify_control_evidence(&p,Gate::Compiler).unwrap_err().0.contains("no evidence record")); }
-    #[test] fn rejects_unverified_control() { let mut p=payload(); p["control_evidence"][0]["verification_status"]="pending"; assert!(verify_control_evidence(&p,Gate::Compiler).unwrap_err().0.contains("not verified")); }
-    #[test] fn rejects_control_for_wrong_gate() { let mut p=payload(); p["control_evidence"][0]["gate"]="runtime"; assert!(verify_control_evidence(&p,Gate::Compiler).unwrap_err().0.contains("not scoped")); }
+    #[test] fn rejects_unverified_control() { let mut p=payload(); p["control_evidence"][0]["verification_status"]="pending".into(); assert!(verify_control_evidence(&p,Gate::Compiler).unwrap_err().0.contains("not verified")); }
+    #[test] fn rejects_control_for_wrong_gate() { let mut p=payload(); p["control_evidence"][0]["gate"]="runtime".into(); assert!(verify_control_evidence(&p,Gate::Compiler).unwrap_err().0.contains("not scoped")); }
     #[test] fn rejects_missing_test_evidence() { let mut p=payload(); p["control_evidence"][0]["test_ids"]=json!([]); assert!(verify_control_evidence(&p,Gate::Compiler).unwrap_err().0.contains("test_ids")); }
 }
