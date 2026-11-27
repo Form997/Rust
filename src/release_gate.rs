@@ -17,6 +17,12 @@ fn sha256_hex(bytes: &[u8]) -> String {
     Sha256::digest(bytes).iter().map(|b| format!("{b:02x}")).collect()
 }
 
+fn artifact_sha256(path: &Path) -> Result<String, String> {
+    let bytes = fs::read(path)
+        .map_err(|e| format!("cannot read release artifact {}: {e}", path.display()))?;
+    Ok(sha256_hex(&bytes))
+}
+
 pub fn evaluate_release_artifact(
     operation: &str,
     artifact_path: &Path,
@@ -30,9 +36,7 @@ pub fn evaluate_release_artifact(
     if !is_release_operation(operation) {
         return Err(format!("unsupported release operation: {operation}"));
     }
-    let bytes = fs::read(artifact_path)
-        .map_err(|e| format!("cannot read release artifact {}: {e}", artifact_path.display()))?;
-    let subject_sha256 = sha256_hex(&bytes);
+    let subject_sha256 = artifact_sha256(artifact_path)?;
     let request = GateRequest {
         decision_id: decision_id.to_owned(),
         subsystem: "release".to_owned(),
@@ -67,7 +71,7 @@ mod tests {
             sha256_hex(b"abc"),
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         );
-        assert_ne!(sha256_hex(b"abc"), sha256_hex(b"abc\\n"));
+        assert_ne!(sha256_hex(b"abc"), sha256_hex(b"abc\n"));
     }
 
     #[test]
@@ -78,12 +82,19 @@ mod tests {
     }
 
     #[test]
-    fn adapter_reads_artifact_bytes_instead_of_accepting_caller_digest() {
+    fn adapter_hashes_the_bytes_read_from_the_artifact_file() {
         let path = std::env::temp_dir().join(format!("al-release-gate-{}.bin", std::process::id()));
         let bytes = b"artifact bytes are the subject";
         fs::write(&path, bytes).expect("write test artifact");
-        let read_back = fs::read(&path).expect("read test artifact");
+        let expected = sha256_hex(bytes);
+        assert_eq!(artifact_sha256(&path).expect("hash test artifact"), expected);
         let _ = fs::remove_file(&path);
-        assert_eq!(sha256_hex(&read_back), sha256_hex(bytes));
+    }
+
+    #[test]
+    fn missing_artifact_is_rejected_before_authorization() {
+        let path = std::env::temp_dir().join(format!("al-release-gate-missing-{}.bin", std::process::id()));
+        let _ = fs::remove_file(&path);
+        assert!(artifact_sha256(&path).is_err());
     }
 }
