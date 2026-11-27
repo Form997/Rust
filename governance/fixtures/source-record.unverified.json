@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "source_id": "AL-SRC-JSON-SCHEMA-2020-12",
+  "issuing_body": "JSON Schema community",
+  "title": "JSON Schema Draft 2020-12",
+  "instrument_type": "technical_specification",
+  "identifier_edition": "Draft 2020-12",
+  "jurisdiction": "International technical specification",
+  "publication_date": null,
+  "effective_date": null,
+  "status": "current",
+  "official_url": "https://json-schema.org/draft/2020-12",
+  "verification_status": "unverified",
+  "applicability": {
+    "binding_nature": "voluntary",
+    "scope": "Used as a data validation vocabulary for AL governance records.",
+    "notes": "Technical format choice; not a legal or scientific certification."
+  },
+  "adoption_status_vn": "unverified",
+  "vietnam_adoption_reference": null,
+  "reviewed_at": null,
+  "next_review": null,
+  "reviewer": null
+}
