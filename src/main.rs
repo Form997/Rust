@@ -5,6 +5,7 @@ mod evidence_audit;
 mod lexer;
 mod policy_gate;
 mod rulebook;
+mod release_gate;
 mod shared_gate;
 mod token;
 
@@ -16,6 +17,7 @@ use evidence_audit::{append_audit_event, verify_audit_chain, verify_evidence};
 use lexer::Lexer;
 use policy_gate::{Gate, authorize_gate};
 use rulebook::{RecordKind, validate};
+use release_gate::evaluate_release_artifact;
 use shared_gate::{evaluate_gate, GateRequest, VerifiedRegistry};
 use serde_json::Value;
 
@@ -30,6 +32,7 @@ fn print_usage() {
     eprintln!("  al rulebook compare <current-payload.json> <candidate-payload.json>");
     eprintln!("  al rulebook gate <gate> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("  al rulebook gate-evaluate <subsystem> <operation> <subject-type> <subject-sha256> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
+    eprintln!("  al rulebook release-gate <build|package|publish_release> <artifact-file> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("  al rulebook evidence-verify <manifest.json> <artifact-file> <owner/repo> <now-utc>");
     eprintln!("  al rulebook audit-append <ledger.jsonl> <event.json>");
     eprintln!("  al rulebook audit-verify <ledger.jsonl>");
@@ -105,6 +108,28 @@ fn run_rulebook(args: &[String]) -> ExitCode {
             match verify_update(&current,&candidate,&registry) {
                 Ok(())=>{println!("UPDATE VERIFIED: signature, authority, parent hash and version progression passed");ExitCode::SUCCESS},
                 Err(e)=>{eprintln!("UPDATE DENIED: {e}");ExitCode::FAILURE}
+            }
+        }
+        Some("release-gate") if args.len()==11 => {
+            let evidence_value=match read_json(&args[7]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
+            let Some(items)=evidence_value.as_array() else {eprintln!("evidence-refs file must contain a JSON array of strings");return ExitCode::FAILURE;};
+            let mut evidence_refs=Vec::new();
+            for item in items {
+                let Some(id)=item.as_str() else {eprintln!("evidence-refs array must contain only strings");return ExitCode::FAILURE;};
+                evidence_refs.push(id.to_owned());
+            }
+            let envelope=match read_json(&args[8]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
+            let signed_registry=match read_json(&args[9]) {Ok(v)=>v,Err(e)=>{eprintln!("{e}");return ExitCode::FAILURE;}};
+            let registry=match VerifiedRegistry::from_signed(&signed_registry,&args[10]) {
+                Ok(v)=>v,Err(e)=>{eprintln!("RELEASE DENIED: trust registry: {e}");return ExitCode::FAILURE;}
+            };
+            match evaluate_release_artifact(&args[2],Path::new(&args[3]),&args[4],&args[5],&args[6],evidence_refs,&envelope,&registry) {
+                Ok(decision)=>{
+                    let rendered=serde_json::to_string_pretty(&decision).unwrap_or_else(|_| String::from("SERIALIZATION_FAILURE"));
+                    println!("{rendered}");
+                    if decision.decision.as_str()=="ALLOW" {ExitCode::SUCCESS} else {ExitCode::FAILURE}
+                },
+                Err(e)=>{eprintln!("RELEASE GATE DENIED: {e}");ExitCode::from(2)}
             }
         }
         Some("gate-evaluate") if args.len()==13 => {
