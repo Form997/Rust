@@ -216,8 +216,8 @@ This phase currently supports the seven existing gate identifiers: compiler, run
 
 ## H0.2.10.3 — Build & Release Gate Adapter
 
-- `src/release_gate.rs` computes SHA-256 from the exact artifact bytes and submits a scoped `release` decision through the shared Rulebook Gate API.
+- `src/release_gate.rs` computes SHA-256 from the exact artifact bytes and submits a scoped `release` decision through the shared Rulebook Gate API. `build` means checking a produced artifact after the build, not blocking the build process before it starts.
 - CLI: `al rulebook release-gate <build|package|publish_release> <artifact-file> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>`.
 - Only an `ALLOW` decision exits successfully. The adapter does not itself publish or deploy an artifact.
-- CI includes a negative smoke test using intentionally untrusted trust inputs. This does not constitute a positive production authorization test or prove integration with every build/release platform.
+- CI checks SHA-256 test vectors, exact-byte binding, untrusted authority, unsupported operations and missing artifacts. These negative checks do not constitute a positive production authorization test or prove integration with every build/release platform.
 - See `governance/H0.2.10.3-BUILD-RELEASE-GATE-ADAPTER.md` for trust boundaries and limitations.
