@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "governance/**"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/rulebook-schema.yml"
   push:
     branches:
