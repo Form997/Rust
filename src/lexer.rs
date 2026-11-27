@@ -3,36 +3,47 @@ use crate::token::{Token, TokenKind};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LexError {
     pub message: String,
+    /// UTF-8 byte offset in the original source.
     pub position: usize,
 }
 
 impl std::fmt::Display for LexError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Lexical error at character {}: {}", self.position, self.message)
+        write!(f, "Lexical error at byte {}: {}", self.position, self.message)
     }
 }
 
 impl std::error::Error for LexError {}
 
-pub struct Lexer {
-    source: Vec<char>,
+pub struct Lexer<'a> {
+    source: &'a str,
+    chars: Vec<(usize, char)>,
     position: usize,
 }
 
-impl Lexer {
-    pub fn new(source: &str) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(source: &'a str) -> Self {
         Self {
-            source: source.chars().collect(),
+            source,
+            chars: source.char_indices().collect(),
             position: 0,
         }
     }
 
+    fn byte_offset_at(&self, char_index: usize) -> usize {
+        self.chars.get(char_index).map(|(byte, _)| *byte).unwrap_or(self.source.len())
+    }
+
+    fn byte_position(&self) -> usize {
+        self.byte_offset_at(self.position)
+    }
+
     fn peek(&self) -> Option<char> {
-        self.source.get(self.position).copied()
+        self.chars.get(self.position).map(|(_, ch)| *ch)
     }
 
     fn peek_next(&self) -> Option<char> {
-        self.source.get(self.position + 1).copied()
+        self.chars.get(self.position + 1).map(|(_, ch)| *ch)
     }
 
     fn advance(&mut self) -> Option<char> {
@@ -42,14 +53,13 @@ impl Lexer {
     }
 
     fn skip_horizontal_whitespace(&mut self) {
-        while matches!(self.peek(), Some(' ' | '\t' | '\r')) {
+        while matches!(self.peek(), Some(' ' | '\t')) {
             self.advance();
         }
     }
 
     fn read_identifier(&mut self) -> String {
         let mut value = String::new();
-
         while let Some(ch) = self.peek() {
             if ch.is_ascii_alphanumeric() || ch == '_' {
                 value.push(ch);
@@ -58,14 +68,12 @@ impl Lexer {
                 break;
             }
         }
-
         value
     }
 
     fn read_number(&mut self) -> String {
         let mut value = String::new();
         let mut seen_decimal_point = false;
-
         while let Some(ch) = self.peek() {
             if ch.is_ascii_digit() {
                 value.push(ch);
@@ -78,49 +86,43 @@ impl Lexer {
                 break;
             }
         }
-
         value
     }
 
     fn read_string(&mut self, start: usize) -> Result<String, LexError> {
-        self.advance(); // Opening quote.
+        self.advance();
         let mut value = String::new();
 
         loop {
             match self.advance() {
                 Some('"') => return Ok(value),
-                Some('\\') => match self.advance() {
-                    Some('n') => value.push('\n'),
-                    Some('r') => value.push('\r'),
-                    Some('t') => value.push('\t'),
-                    Some('"') => value.push('"'),
-                    Some('\\') => value.push('\\'),
-                    Some(other) => {
-                        return Err(LexError {
+                Some('\\') => {
+                    let escape_start = self.byte_offset_at(self.position - 1);
+                    match self.advance() {
+                        Some('n') => value.push('\n'),
+                        Some('r') => value.push('\r'),
+                        Some('t') => value.push('\t'),
+                        Some('"') => value.push('"'),
+                        Some('\\') => value.push('\\'),
+                        Some(other) => return Err(LexError {
                             message: format!("unsupported escape sequence: \\{other}"),
-                            position: self.position.saturating_sub(2),
-                        });
-                    }
-                    None => {
-                        return Err(LexError {
+                            position: escape_start,
+                        }),
+                        None => return Err(LexError {
                             message: "unterminated escape sequence".to_string(),
-                            position: self.position,
-                        });
+                            position: escape_start,
+                        }),
                     }
-                },
-                Some('\n') => {
-                    return Err(LexError {
-                        message: "newline inside string literal".to_string(),
-                        position: self.position.saturating_sub(1),
-                    });
                 }
+                Some('\n') | Some('\r') => return Err(LexError {
+                    message: "newline inside string literal".to_string(),
+                    position: self.byte_offset_at(self.position - 1),
+                }),
                 Some(ch) => value.push(ch),
-                None => {
-                    return Err(LexError {
-                        message: "unterminated string literal".to_string(),
-                        position: start,
-                    });
-                }
+                None => return Err(LexError {
+                    message: "unterminated string literal".to_string(),
+                    position: start,
+                }),
             }
         }
     }
@@ -143,17 +145,22 @@ impl Lexer {
     pub fn tokenize(&mut self) -> Result<Vec<Token>, LexError> {
         let mut tokens = Vec::new();
 
-        while self.position < self.source.len() {
+        while self.position < self.chars.len() {
             self.skip_horizontal_whitespace();
-
-            let Some(ch) = self.peek() else {
-                break;
-            };
-
-            let start = self.position;
+            let Some(ch) = self.peek() else { break };
+            let start = self.byte_position();
 
             let kind = match ch {
                 '\n' => {
+                    self.advance();
+                    Some(TokenKind::Newline)
+                }
+                '\r' if self.peek_next() == Some('\n') => {
+                    self.advance();
+                    self.advance();
+                    Some(TokenKind::Newline)
+                }
+                '\r' => {
                     self.advance();
                     Some(TokenKind::Newline)
                 }
@@ -165,44 +172,31 @@ impl Lexer {
                     self.advance();
                     Some(TokenKind::Equal)
                 }
-                '"' => {
-                    let value = self.read_string(start)?;
-                    Some(TokenKind::StringLiteral(value))
-                }
+                '"' => Some(TokenKind::StringLiteral(self.read_string(start)?)),
                 '/' if self.peek_next() == Some('/') => {
                     while let Some(current) = self.peek() {
-                        if current == '\n' {
-                            break;
-                        }
+                        if matches!(current, '\n' | '\r') { break; }
                         self.advance();
                     }
                     None
                 }
-                c if c.is_ascii_digit() => {
-                    Some(TokenKind::Number(self.read_number()))
-                }
+                c if c.is_ascii_digit() => Some(TokenKind::Number(self.read_number())),
                 c if c.is_ascii_alphabetic() || c == '_' => {
                     Some(Self::keyword_or_identifier(self.read_identifier()))
                 }
-                other => {
-                    return Err(LexError {
-                        message: format!("unexpected character {other:?}"),
-                        position: start,
-                    });
-                }
+                other => return Err(LexError {
+                    message: format!("unexpected character {other:?}"),
+                    position: start,
+                }),
             };
 
             if let Some(kind) = kind {
-                tokens.push(Token::new(kind, start, self.position));
+                tokens.push(Token::new(kind, start, self.byte_position()));
             }
         }
 
-        tokens.push(Token::new(
-            TokenKind::Eof,
-            self.position,
-            self.position,
-        ));
-
+        let eof = self.source.len();
+        tokens.push(Token::new(TokenKind::Eof, eof, eof));
         Ok(tokens)
     }
 }
@@ -221,48 +215,44 @@ DATA:
 END
 OUTPUT count
 "#;
-
         let tokens = Lexer::new(source).tokenize().expect("source should tokenize");
-
         assert_eq!(tokens[0].kind, TokenKind::Program);
         assert_eq!(tokens[1].kind, TokenKind::StringLiteral("Demo".into()));
-        assert!(tokens.iter().any(|token| {
-            token.kind == TokenKind::Identifier("count".into())
-        }));
-        assert!(tokens.iter().any(|token| {
-            token.kind == TokenKind::Number("12".into())
-        }));
+        assert!(tokens.iter().any(|token| token.kind == TokenKind::Identifier("count".into())));
+        assert!(tokens.iter().any(|token| token.kind == TokenKind::Number("12".into())));
         assert_eq!(tokens.last().unwrap().kind, TokenKind::Eof);
     }
 
     #[test]
-    fn decodes_string_escapes() {
-        let tokens = Lexer::new(r#"OUTPUT "line\nnext""#)
-            .tokenize()
-            .expect("valid escape");
+    fn token_spans_are_utf8_byte_offsets() {
+        let source = "OUTPUT \"Tiếng Việt\"";
+        let tokens = Lexer::new(source).tokenize().unwrap();
+        let token = tokens.iter().find(|t| matches!(t.kind, TokenKind::StringLiteral(_))).unwrap();
+        assert_eq!(&source[token.span.start..token.span.end], "\"Tiếng Việt\"");
+    }
 
-        assert_eq!(
-            tokens[1].kind,
-            TokenKind::StringLiteral("line\nnext".into())
-        );
+    #[test]
+    fn decodes_string_escapes() {
+        let tokens = Lexer::new(r#"OUTPUT "line\nnext""#).tokenize().expect("valid escape");
+        assert_eq!(tokens[1].kind, TokenKind::StringLiteral("line\nnext".into()));
     }
 
     #[test]
     fn rejects_unterminated_strings() {
-        let error = Lexer::new(r#"OUTPUT "unfinished"#)
-            .tokenize()
-            .expect_err("unterminated string must fail");
-
+        let error = Lexer::new(r#"OUTPUT "unfinished"#).tokenize().expect_err("unterminated string must fail");
         assert!(error.message.contains("unterminated"));
     }
 
     #[test]
     fn skips_line_comments_but_keeps_newline() {
-        let tokens = Lexer::new("OUTPUT value // comment\nEND")
-            .tokenize()
-            .expect("valid comment");
-
+        let tokens = Lexer::new("OUTPUT value // comment\nEND").tokenize().expect("valid comment");
         assert!(tokens.iter().any(|token| token.kind == TokenKind::Newline));
         assert!(tokens.iter().any(|token| token.kind == TokenKind::End));
+    }
+
+    #[test]
+    fn treats_crlf_as_one_newline_token() {
+        let tokens = Lexer::new("OUTPUT x\r\nEND").tokenize().unwrap();
+        assert_eq!(tokens.iter().filter(|t| t.kind == TokenKind::Newline).count(), 1);
     }
 }
