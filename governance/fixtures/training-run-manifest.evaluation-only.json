@@ -1,0 +1,56 @@
+{
+  "schema_version": "0.1.0",
+  "run_id": "AL-TRN-EXAMPLE-001",
+  "run_type": "evaluation",
+  "started_at": "2026-11-27T00:00:00Z",
+  "completed_at": null,
+  "rulebook": {
+    "version": "0.1.0",
+    "bundle_checksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "status": "evaluation_only"
+  },
+  "metrics": [
+    {
+      "metric_id": "AL-MET-LEX-EXACT-MATCH",
+      "version": "0.1.0",
+      "card_checksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "dataset": [
+    {
+      "dataset_id": "al-syntax-heldout",
+      "version": "1.0.0",
+      "content_checksum": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "license_status": "unknown",
+      "provenance_record": "governance/provenance/heldout-corpus.md",
+      "privacy_review": null
+    }
+  ],
+  "code": {
+    "repository": "https://github.com/Form997/Rust",
+    "commit": "dddddddddddddddddddddddddddddddddddddddd",
+    "dirty_worktree": false
+  },
+  "configuration": {
+    "config_checksum": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "hyperparameters": {
+      "batch_size": 1
+    },
+    "notes": "Illustrative evaluation-only fixture; not a production training run."
+  },
+  "random_seeds": [
+    17
+  ],
+  "environment": {
+    "os": "ubuntu-latest",
+    "runtime": "Python 3.12",
+    "hardware_profile": "lite",
+    "hardware_details": "CI fixture only."
+  },
+  "artifacts": [],
+  "governance_review": {
+    "state": "pending",
+    "reviewer": null,
+    "notes": "Fixture only; no real model training or approval is represented."
+  }
+}
