@@ -161,7 +161,7 @@ mod tests {
         let sig = maintainer.sign(&serde_json::to_vec(&candidate_payload).unwrap());
         let candidate = json!({"algorithm":"Ed25519","key_id":"maintainer-1","payload":candidate_payload,
             "signature_base64":STANDARD.encode(sig.to_bytes())});
-        (registry_envelope,current,candidate,pin,root)
+        (registry_envelope,current,candidate,pin,maintainer)
     }
 
     #[test] fn accepts_root_signed_registry_with_correct_pin() {
