@@ -91,6 +91,15 @@ The example is currently a source-language design sample. Version 0.1.0 tokenize
 MIT. See [LICENSE](LICENSE).
 
 
+## H0.2.1 — Rulebook validation implementation
+
+- `governance/bundles/al-rulebook-0.1.0.proposed.json` — proposed example bundle (not approved).
+- `governance/fixtures/invalid-rulebook-missing-required.json` — negative validation fixture.
+- `.github/workflows/rulebook-schema.yml` — CI checks schema meta-structure, accepts the valid fixture and rejects the invalid fixture.
+- `governance/H0.2.1-VALIDATION-IMPLEMENTATION.md` — scope and limitations.
+
+The workflow is committed but must run in GitHub Actions before its result can be called passing. Structural schema validation is not standards verification or legal compliance.
+
 ## H0.2 — AL Rulebook governance foundation (draft)
 
 The H0.2 branch establishes the proposed governance layer before further compiler and AI implementation:
