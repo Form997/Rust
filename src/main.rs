@@ -1,4 +1,5 @@
 mod authority;
+mod attestation_anchor;
 mod control_evidence;
 mod evidence_audit;
 mod lexer;
@@ -8,6 +9,7 @@ mod token;
 
 use std::{env, fs, path::Path, process::ExitCode};
 use authority::{verify_signed_bundle, verify_signed_registry, verify_update};
+use attestation_anchor::{create_audit_anchor, verify_audit_anchor, verify_github_attestation};
 use control_evidence::verify_control_evidence;
 use evidence_audit::{append_audit_event, verify_audit_chain, verify_evidence};
 use lexer::Lexer;
@@ -28,6 +30,9 @@ fn print_usage() {
     eprintln!("  al rulebook evidence-verify <manifest.json> <artifact-file> <owner/repo> <now-utc>");
     eprintln!("  al rulebook audit-append <ledger.jsonl> <event.json>");
     eprintln!("  al rulebook audit-verify <ledger.jsonl>");
+    eprintln!("  al rulebook audit-anchor-create <ledger.jsonl> <anchor.json>");
+    eprintln!("  al rulebook audit-anchor-verify <ledger.jsonl> <anchor.json>");
+    eprintln!("  al rulebook attestation-verify <subject-file> <owner/repo> <signer-workflow>");
     eprintln!("The root fingerprint must come from separately protected deployment configuration.");
 }
 fn read_json(path: &str) -> Result<Value,String> {
@@ -41,6 +46,24 @@ fn run_rulebook(args: &[String]) -> ExitCode {
             match verify_evidence(&manifest,Path::new(&args[3]),&args[4],&args[5]) {
                 Ok(message)=>{println!("EVIDENCE VERIFIED: {message}");ExitCode::SUCCESS},
                 Err(e)=>{eprintln!("EVIDENCE DENIED: {e}");ExitCode::FAILURE}
+            }
+        }
+        Some("audit-anchor-create") if args.len()==4 => {
+            match create_audit_anchor(Path::new(&args[2]),Path::new(&args[3])) {
+                Ok(anchor)=>{println!("AUDIT ANCHOR CREATED: {}",anchor);ExitCode::SUCCESS},
+                Err(e)=>{eprintln!("ANCHOR DENIED: {e}");ExitCode::FAILURE}
+            }
+        }
+        Some("audit-anchor-verify") if args.len()==4 => {
+            match verify_audit_anchor(Path::new(&args[2]),Path::new(&args[3])) {
+                Ok(())=>{println!("AUDIT ANCHOR VERIFIED");ExitCode::SUCCESS},
+                Err(e)=>{eprintln!("ANCHOR INVALID: {e}");ExitCode::FAILURE}
+            }
+        }
+        Some("attestation-verify") if args.len()==5 => {
+            match verify_github_attestation(Path::new(&args[2]),&args[3],&args[4],"https://slsa.dev/provenance/v1") {
+                Ok(message)=>{println!("ATTESTATION VERIFIED: {message}");ExitCode::SUCCESS},
+                Err(e)=>{eprintln!("ATTESTATION DENIED: {e}");ExitCode::FAILURE}
             }
         }
         Some("audit-append") if args.len()==4 => {
