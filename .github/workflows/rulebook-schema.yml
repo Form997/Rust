@@ -18,6 +18,10 @@ permissions:
 
 jobs:
   validate-rulebook:
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -76,3 +80,30 @@ jobs:
           cargo run --quiet -- rulebook evidence-verify /tmp/al-evidence-manifest.json /tmp/al-evidence-artifact.bin Form997/Rust 2026-11-27T11:00:00Z
           cargo run --quiet -- rulebook audit-append /tmp/al-audit.jsonl governance/fixtures/audit-event.example.json
           cargo run --quiet -- rulebook audit-verify /tmp/al-audit.jsonl
+
+      - name: Create an audit ledger and anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '{"action":"rulebook_ci","result":"success"}' > /tmp/al-anchor-event.json
+          cargo run --quiet -- rulebook audit-append /tmp/al-anchor-ledger.jsonl /tmp/al-anchor-event.json
+          cargo run --quiet -- rulebook audit-anchor-create /tmp/al-anchor-ledger.jsonl /tmp/al-audit-anchor.json
+          cargo run --quiet -- rulebook audit-anchor-verify /tmp/al-anchor-ledger.jsonl /tmp/al-audit-anchor.json
+
+      - name: Attest the audit anchor
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: /tmp/al-audit-anchor.json
+
+      - name: Verify the GitHub artifact attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh attestation verify /tmp/al-audit-anchor.json \
+            --repo Form997/Rust \
+            --signer-workflow Form997/Rust/.github/workflows/rulebook-schema.yml \
+            --predicate-type https://slsa.dev/provenance/v1 \
+            --deny-self-hosted-runners
+          cargo run --quiet -- rulebook attestation-verify /tmp/al-audit-anchor.json Form997/Rust Form997/Rust/.github/workflows/rulebook-schema.yml
