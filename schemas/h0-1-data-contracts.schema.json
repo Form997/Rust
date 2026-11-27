@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://form997.github.io/Rust/schemas/h0-1-data-contracts.schema.json",
+  "title": "AL H0.1 Interchange Data Contracts",
+  "description": "Versioned interchange contracts. These schemas do not replace Rust-native compiler types or runtime validation.",
+  "$defs": {
+    "Span": {
+      "type": "object", "additionalProperties": false,
+      "required": ["start_byte", "end_byte"],
+      "properties": {"start_byte": {"type": "integer", "minimum": 0}, "end_byte": {"type": "integer", "minimum": 0}}
+    },
+    "SourceDocument": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "document_id", "content_hash", "encoding", "text"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "document_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "content_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "encoding": {"const": "utf-8"},
+        "language": {"type": "string", "maxLength": 64},
+        "text": {"type": "string", "maxLength": 2000000}
+      }
+    },
+    "Token": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "kind", "span"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "kind": {"type": "string", "minLength": 1, "maxLength": 64},
+        "lexeme": {"type": "string", "maxLength": 100000}, "span": {"$ref": "#/$defs/Span"}
+      }
+    },
+    "Diagnostic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "code", "severity", "message", "span"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$"},
+        "severity": {"enum": ["error", "warning", "info"]}, "message": {"type": "string", "maxLength": 8192},
+        "span": {"$ref": "#/$defs/Span"}, "related_spans": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/Span"}},
+        "help": {"type": "string", "maxLength": 4096}
+      }
+    },
+    "Provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "origin_kind", "origin_id"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "origin_kind": {"enum": ["human_input", "public_source", "licensed_dataset", "generated", "measured", "derived", "unknown"]},
+        "origin_id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "uri": {"type": "string", "format": "uri"}, "retrieved_at": {"type": "string", "format": "date-time"},
+        "license": {"type": "string", "maxLength": 256}, "content_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "method": {"type": "string", "maxLength": 2048},
+        "limitations": {"type": "array", "maxItems": 64, "items": {"type": "string", "maxLength": 2048}}
+      }
+    },
+    "ScientificQuantity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "value", "unit", "dimension", "value_kind"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "value": {"type": "number"},
+        "unit": {"type": "string", "minLength": 1, "maxLength": 64}, "dimension": {"type": "string", "minLength": 1, "maxLength": 128},
+        "value_kind": {"enum": ["exact", "measured", "estimated", "simulated"]},
+        "standard_uncertainty": {"type": "number", "minimum": 0}, "uncertainty_unit": {"type": "string", "maxLength": 64},
+        "significant_digits": {"type": "integer", "minimum": 1, "maximum": 100}, "provenance": {"$ref": "#/$defs/Provenance"}
+      }
+    },
+    "ModelManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "model_id", "version", "artifact_sha256", "format", "license", "intended_tasks"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "model_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "version": {"type": "string", "minLength": 1, "maxLength": 64}, "artifact_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "format": {"type": "string", "maxLength": 64}, "quantization": {"type": ["string", "null"], "maxLength": 64},
+        "tokenizer_id": {"type": ["string", "null"], "maxLength": 256}, "license": {"type": "string", "maxLength": 256},
+        "source_uri": {"type": ["string", "null"], "format": "uri"},
+        "intended_tasks": {"type": "array", "minItems": 1, "maxItems": 64, "items": {"type": "string", "maxLength": 128}},
+        "minimum_ram_bytes": {"type": ["integer", "null"], "minimum": 0},
+        "context_limit_tokens": {"type": ["integer", "null"], "minimum": 1}, "approved": {"type": "boolean", "default": false}
+      }
+    },
+    "TrainingRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "run_id", "task_id", "dataset_hash", "code_revision", "seed", "started_at", "metrics"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "run_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "task_id": {"type": "string", "minLength": 1, "maxLength": 256}, "dataset_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "code_revision": {"type": "string", "minLength": 7, "maxLength": 64}, "seed": {"type": ["integer", "null"]},
+        "started_at": {"type": "string", "format": "date-time"}, "completed_at": {"type": ["string", "null"], "format": "date-time"},
+        "metrics": {"type": "object", "additionalProperties": {"type": "number"}},
+        "environment": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean"]}}
+      }
+    },
+    "RetrievalChunk": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "chunk_id", "document_id", "document_version", "content_hash", "text", "span", "access_class"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "chunk_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "document_id": {"type": "string", "minLength": 1, "maxLength": 256}, "document_version": {"type": "string", "minLength": 1, "maxLength": 128},
+        "content_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}, "text": {"type": "string", "maxLength": 100000},
+        "span": {"$ref": "#/$defs/Span"}, "access_class": {"enum": ["public", "private", "restricted"]},
+        "language": {"type": "string", "maxLength": 64}, "embedding_model_id": {"type": ["string", "null"], "maxLength": 256},
+        "deleted": {"type": "boolean", "default": false}, "provenance": {"$ref": "#/$defs/Provenance"}
+      }
+    },
+    "CapabilityRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "request_id", "capability", "resource", "reason"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "request_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "capability": {"enum": ["filesystem.read", "filesystem.write", "network.connect", "process.spawn", "device.access"]},
+        "resource": {"type": "string", "minLength": 1, "maxLength": 2048}, "reason": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "requested_by": {"enum": ["user", "program", "ai_proposal"]}, "granted": {"const": false}
+      }
+    },
+    "ExecutionRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "request_id", "program_hash", "mode", "limits", "capabilities"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "request_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "program_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}, "mode": {"enum": ["validate_only", "dry_run", "execute"]},
+        "limits": {
+          "type": "object", "additionalProperties": false, "required": ["max_steps", "max_memory_bytes", "timeout_ms"],
+          "properties": {"max_steps": {"type": "integer", "minimum": 1}, "max_memory_bytes": {"type": "integer", "minimum": 1048576}, "timeout_ms": {"type": "integer", "minimum": 1}}
+        },
+        "capabilities": {"type": "array", "uniqueItems": true, "maxItems": 32, "items": {"type": "string", "maxLength": 128}},
+        "explicit_user_approval": {"type": "boolean", "default": false}
+      }
+    }
+  }
+}
