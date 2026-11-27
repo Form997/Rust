@@ -164,6 +164,50 @@ mod tests {
         (registry_envelope,current,candidate,pin,maintainer)
     }
 
+    fn signed_maintainer_bundle() -> (Value, Value) {
+        let signing = SigningKey::from_bytes(&[17u8;32]);
+        let payload = json!({"bundle_id":"al-test","rulebook_version":"0.1.0","status":"approved",
+            "approval":{"state":"approved","approver":"human-17","approved_at":"2026-11-27T00:00:00Z"}});
+        let signature = signing.sign(&serde_json::to_vec(&payload).unwrap());
+        let envelope = json!({"algorithm":"Ed25519","key_id":"maintainer-17","payload":payload,
+            "signature_base64":STANDARD.encode(signature.to_bytes())});
+        let registry = json!({"registry_version":"1.0.0","keys":[{
+            "key_id":"maintainer-17","principal_id":"human-17","role":"rulebook_authority","status":"active",
+            "public_key_base64":STANDARD.encode(signing.verifying_key().as_bytes())
+        }]});
+        (envelope,registry)
+    }
+
+    #[test] fn accepts_valid_human_authority_signature() {
+        let (envelope,registry)=signed_maintainer_bundle();
+        assert!(verify_signed_bundle(&envelope,&registry).is_ok());
+    }
+    #[test] fn rejects_payload_tampering() {
+        let (mut envelope,registry)=signed_maintainer_bundle();
+        envelope["payload"]["rulebook_version"]=Value::String("9.9.9".into());
+        assert!(verify_signed_bundle(&envelope,&registry).unwrap_err().0.contains("signature verification failed"));
+    }
+    #[test] fn rejects_unknown_signing_key() {
+        let (mut envelope,registry)=signed_maintainer_bundle();
+        envelope["key_id"]=Value::String("unknown".into());
+        assert!(verify_signed_bundle(&envelope,&registry).unwrap_err().0.contains("not trusted"));
+    }
+    #[test] fn rejects_revoked_signing_key() {
+        let (envelope,mut registry)=signed_maintainer_bundle();
+        registry["keys"][0]["status"]=Value::String("revoked".into());
+        assert!(verify_signed_bundle(&envelope,&registry).unwrap_err().0.contains("not active"));
+    }
+    #[test] fn rejects_approval_by_different_person() {
+        let (mut envelope,registry)=signed_maintainer_bundle();
+        envelope["payload"]["approval"]["approver"]=Value::String("other-human".into());
+        assert!(verify_signed_bundle(&envelope,&registry).unwrap_err().0.contains("identity does not match"));
+    }
+    #[test] fn rejects_non_approved_payload() {
+        let (mut envelope,registry)=signed_maintainer_bundle();
+        envelope["payload"]["status"]=Value::String("proposed".into());
+        assert!(verify_signed_bundle(&envelope,&registry).unwrap_err().0.contains("only an approved"));
+    }
+
     #[test] fn accepts_root_signed_registry_with_correct_pin() {
         let (registry,_,_,pin,_) = signed_registry_and_bundle();
         assert!(verify_signed_registry(&registry,&pin).is_ok());
