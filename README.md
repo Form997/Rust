@@ -91,6 +91,19 @@ The example is currently a source-language design sample. Version 0.1.0 tokenize
 MIT. See [LICENSE](LICENSE).
 
 
+## H0.2 — AL Rulebook governance foundation (draft)
+
+The H0.2 branch establishes the proposed governance layer before further compiler and AI implementation:
+
+- `governance/AL-RULEBOOK-CHARTER-0.1.md` — decision authority, stop conditions, rule lifecycle and versioning.
+- `governance/AL-RULEBOOK-ARCHITECTURE-0.1.md` — Rulebook Center and dedicated update workflow.
+- `governance/AL-STANDARDS-REGISTER-0.1.md` — verified-source register; candidate families are not yet approved requirements.
+- `governance/AL-TRAINING-METRICS-FRAMEWORK-0.1.md` — mandatory metric specification and training gates.
+- `governance/AL-VIETNAM-ADOPTION-PATH-0.1.md` — evidence-based path for Vietnam alignment and international review.
+- `governance/schemas/al-rulebook-bundle.schema.json` — machine-readable bundle manifest.
+
+These are proposed governance artifacts on the H0.2 branch. They are not yet approved as binding project policy, externally certified, or automatically enforced. No standard is claimed as adopted by Vietnam or accepted worldwide without official evidence.
+
 ## H0.1 technical completion pack
 
 - docs/H0.1-COMPLETION-REPORT.md — completion report, inspected source boundary and deferred work.
