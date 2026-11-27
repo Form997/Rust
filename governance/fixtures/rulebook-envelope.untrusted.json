@@ -1,0 +1,15 @@
+{
+  "algorithm": "Ed25519",
+  "key_id": "not-in-trust-store",
+  "payload": {
+    "bundle_id": "untrusted-example",
+    "rulebook_version": "0.1.0",
+    "status": "approved",
+    "approval": {
+      "state": "approved",
+      "approver": "unknown",
+      "approved_at": "2026-11-27T00:00:00Z"
+    }
+  },
+  "signature_base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+}
