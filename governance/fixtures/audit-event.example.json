@@ -1,0 +1,5 @@
+{
+  "action":"ci_smoke_test",
+  "result":"success",
+  "scope":"H0.2.8 CLI smoke test"
+}
