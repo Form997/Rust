@@ -212,3 +212,12 @@ These H0.2.8/H0.2.9 additions remain development-branch work until reviewed, tes
 - CLI entry: `al rulebook gate-evaluate ...`.
 
 This phase currently supports the seven existing gate identifiers: compiler, runtime, AI, training, evaluation, scientific and release. Package/dependency, dataset, Rulebook Update Center and audit/trust adapters remain pending. The API is not yet integrated into live subsystem operations, and an ALLOW is not safe to act upon until production audit persistence is coupled to the operation. CI and owner/security review are required before this candidate is accepted.
+
+
+## H0.2.10.3 — Build & Release Gate Adapter
+
+- `src/release_gate.rs` computes SHA-256 from the exact artifact bytes and submits a scoped `release` decision through the shared Rulebook Gate API.
+- CLI: `al rulebook release-gate <build|package|publish_release> <artifact-file> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>`.
+- Only an `ALLOW` decision exits successfully. The adapter does not itself publish or deploy an artifact.
+- CI includes a negative smoke test using intentionally untrusted trust inputs. This does not constitute a positive production authorization test or prove integration with every build/release platform.
+- See `governance/H0.2.10.3-BUILD-RELEASE-GATE-ADAPTER.md` for trust boundaries and limitations.
