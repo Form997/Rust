@@ -1,0 +1,64 @@
+{
+  "schema_version": "0.1.0",
+  "metric_id": "AL-MET-LEX-EXACT-MATCH",
+  "version": "0.1.0",
+  "name": "Exact match on held-out AL syntax cases",
+  "domain": "compiler",
+  "purpose": "Measure exact output agreement on a versioned held-out syntax corpus.",
+  "definition": "Fraction of evaluated cases whose normalized output exactly matches the reference output.",
+  "formula": {
+    "expression": "correct_cases / evaluated_cases",
+    "method": "Count exact matches then divide by all eligible evaluated cases.",
+    "variables": [
+      {
+        "symbol": "correct_cases",
+        "meaning": "Number of cases matching the reference exactly",
+        "unit": "cases"
+      },
+      {
+        "symbol": "evaluated_cases",
+        "meaning": "Number of eligible cases evaluated",
+        "unit": "cases"
+      }
+    ]
+  },
+  "unit": "fraction",
+  "scale": "ratio",
+  "population": {
+    "description": "Versioned held-out AL syntax cases.",
+    "inclusion": "Cases with a valid reference output and deterministic evaluation.",
+    "exclusion": "Malformed or disputed reference cases excluded before evaluation.",
+    "sample_size": 120,
+    "sampling_method": "Stratified by syntax feature and error class."
+  },
+  "measurement_protocol": {
+    "procedure": "Run the pinned compiler build against each held-out case and compare normalized outputs.",
+    "instrument_or_implementation": "Pinned AL test harness.",
+    "conditions": "Same compiler flags and fixture corpus; no network access.",
+    "repeat_count": 1,
+    "reference_protocol": "governance/evaluation/lexical-corpus-v1"
+  },
+  "aggregation": {
+    "method": "Arithmetic proportion across eligible cases.",
+    "aggregation_unit": "evaluation run",
+    "weighting": "Unweighted case-level mean."
+  },
+  "uncertainty": {
+    "method": "Report Wilson confidence interval for a binomial proportion.",
+    "reported": true,
+    "confidence_level": 0.95,
+    "limitations": "Confidence interval does not capture corpus representativeness."
+  },
+  "threshold": {
+    "state": "approved",
+    "value": null,
+    "unit": "fraction",
+    "rationale": "No evidence",
+    "evidence_ids": []
+  },
+  "evidence": [],
+  "status": "proposed",
+  "owner": "AL compiler team",
+  "reviewed_at": null,
+  "next_review": null
+}
