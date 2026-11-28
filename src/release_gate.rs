@@ -416,8 +416,6 @@ pub fn evaluate_release_artifact_audited(
 mod audited_release_tests {
     use super::*;
     use crate::evidence_audit::verify_audit_chain;
-    use serde_json::Value;
-
     #[test]
     fn r03_allow_is_not_returned_until_audit_record_is_written_and_verified() {
         let (registry, envelope, pin) = authority_integration_tests::signed_authority("active");
@@ -508,13 +506,14 @@ mod release_e2e_tests {
         fs::write(&plan, br#"{"target":"x86_64-unknown-linux-gnu","profile":"release"}"#).unwrap();
         let built = Arc::new(AtomicBool::new(false));
         let built_callback = built.clone();
+        let artifact_for_build = artifact.clone();
         let build_result = run_guarded_build(
             &plan, &artifact, "2026-11-28T10:00:00Z", "R06-BUILD",
             "0.2.10.3-r06", vec!["R01-TEST-EVIDENCE".into()],
             &envelope, &verified,
             move || {
                 built_callback.store(true, Ordering::SeqCst);
-                fs::write(&artifact, b"AL release artifact from end-to-end test")
+                fs::write(&artifact_for_build, b"AL release artifact from end-to-end test")
                     .map_err(|e| e.to_string())
             }
         ).unwrap();
