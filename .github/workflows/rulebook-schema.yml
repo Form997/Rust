@@ -73,7 +73,8 @@ jobs:
           cargo run --quiet -- rulebook validate metric-card governance/fixtures/metric-card.proposed.json
           cargo run --quiet -- rulebook validate source-record governance/fixtures/source-record.unverified.json
           cargo run --quiet -- rulebook validate decision-record governance/fixtures/decision-record.proposed.json
-          cargo run --quiet -- rulebook validate training-run-manifest governance/fixtures/training-run-manifest.evaluation-only.json\n          if cargo run --quiet -- rulebook release-routes-verify governance/fixtures/release-route-inventory.not-set.json; then exit 1; fi
+          cargo run --quiet -- rulebook validate training-run-manifest governance/fixtures/training-run-manifest.evaluation-only.json
+          if cargo run --quiet -- rulebook release-routes-verify governance/fixtures/release-route-inventory.not-set.json; then exit 1; fi
           if cargo run --quiet -- rulebook validate metric-card governance/fixtures/invalid-metric-card-approved-without-threshold.json; then exit 1; fi
           if cargo run --quiet -- rulebook verify-signed governance/fixtures/rulebook-envelope.untrusted.json governance/trust/authorized-signers.example.json; then exit 1; fi
           if cargo run --quiet -- rulebook verify-registry governance/fixtures/signed-root-registry.example.json 0000000000000000000000000000000000000000000000000000000000000000; then exit 1; fi
