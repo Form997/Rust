@@ -309,3 +309,60 @@ where
     }
     Ok(GuardedBuildResult { preflight, postflight })
 }
+
+
+#[cfg(test)]
+mod guarded_build_tests {
+    use super::*;
+    use serde_json::Value;
+    use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+
+    #[test]
+    fn r02_build_callback_runs_only_after_preflight_allow_and_requires_postflight_allow() {
+        let (registry, envelope, pin) = authority_integration_tests::signed_authority("active");
+        let verified = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let plan = std::env::temp_dir().join(format!("al-r02-plan-{}.json", std::process::id()));
+        let artifact = std::env::temp_dir().join(format!("al-r02-artifact-{}.bin", std::process::id()));
+        fs::write(&plan, br#"{"toolchain":"test","target":"test"}"#).unwrap();
+        let ran = Arc::new(AtomicBool::new(false));
+        let ran_build = ran.clone();
+        let result = run_guarded_build(
+            &plan, &artifact, "2026-11-28T10:00:00Z", "R02-ALLOW",
+            "0.2.10.3-r02", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified,
+            move || {
+                ran_build.store(true, Ordering::SeqCst);
+                fs::write(&artifact, b"guarded build output").map_err(|e| e.to_string())
+            }
+        ).unwrap();
+        assert!(ran.load(Ordering::SeqCst));
+        assert_eq!(result.preflight.decision.as_str(), "ALLOW");
+        assert_eq!(result.postflight.decision.as_str(), "ALLOW");
+        let _ = fs::remove_file(plan);
+        let _ = fs::remove_file(artifact);
+    }
+
+    #[test]
+    fn r02_denied_preflight_never_invokes_build_callback() {
+        let (registry, envelope, pin) = authority_integration_tests::signed_authority("revoked");
+        let verified = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let plan = std::env::temp_dir().join(format!("al-r02-deny-plan-{}.json", std::process::id()));
+        let artifact = std::env::temp_dir().join(format!("al-r02-deny-artifact-{}.bin", std::process::id()));
+        fs::write(&plan, b"build plan").unwrap();
+        let ran = Arc::new(AtomicBool::new(false));
+        let ran_build = ran.clone();
+        let result = run_guarded_build(
+            &plan, &artifact, "2026-11-28T10:00:00Z", "R02-DENY",
+            "0.2.10.3-r02", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified,
+            move || {
+                ran_build.store(true, Ordering::SeqCst);
+                Ok(())
+            }
+        );
+        assert!(result.is_err());
+        assert!(!ran.load(Ordering::SeqCst));
+        assert!(!artifact.exists());
+        let _ = fs::remove_file(plan);
+    }
+}
