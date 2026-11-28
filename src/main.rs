@@ -5,7 +5,8 @@ mod evidence_audit;
 mod lexer;
 mod policy_gate;
 mod rulebook;
-mod release_gate;\nmod release_routes;
+mod release_gate;
+mod release_routes;
 mod shared_gate;
 mod token;
 
@@ -17,7 +18,8 @@ use evidence_audit::{append_audit_event, verify_audit_chain, verify_evidence};
 use lexer::Lexer;
 use policy_gate::{Gate, authorize_gate};
 use rulebook::{RecordKind, validate};
-use release_gate::{evaluate_release_artifact, evaluate_release_artifact_audited};\nuse release_routes::{assess_release_route_inventory, RouteInventoryDecision};
+use release_gate::{evaluate_release_artifact, evaluate_release_artifact_audited};
+use release_routes::{assess_release_route_inventory, RouteInventoryDecision};
 use shared_gate::{evaluate_gate, GateRequest, VerifiedRegistry};
 use serde_json::Value;
 
