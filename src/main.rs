@@ -32,7 +32,8 @@ fn print_usage() {
     eprintln!("  al rulebook compare <current-payload.json> <candidate-payload.json>");
     eprintln!("  al rulebook gate <gate> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
     eprintln!("  al rulebook gate-evaluate <subsystem> <operation> <subject-type> <subject-sha256> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
-    eprintln!("  al rulebook release-gate <build|package|publish_release> <artifact-file> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");\n    eprintln!("  al rulebook release-gate-audited <build|package|publish_release> <artifact-file> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex> <audit-ledger.jsonl>");\n    eprintln!("  al rulebook release-routes-verify <route-inventory.json>");
+    eprintln!("  al rulebook release-gate <build|package|publish_release> <artifact-file> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex>");
+    eprintln!("  al rulebook release-gate-audited <build|package|publish_release> <artifact-file> <evaluated-at-utc> <decision-id> <verifier-version> <evidence-refs.json> <signed-envelope.json> <signed-registry.json> <pinned-root-fingerprint-hex> <audit-ledger.jsonl>");\n    eprintln!("  al rulebook release-routes-verify <route-inventory.json>");
     eprintln!("  al rulebook evidence-verify <manifest.json> <artifact-file> <owner/repo> <now-utc>");
     eprintln!("  al rulebook audit-append <ledger.jsonl> <event.json>");
     eprintln!("  al rulebook audit-verify <ledger.jsonl>");
