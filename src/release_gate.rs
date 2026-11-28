@@ -255,6 +255,7 @@ mod authority_integration_tests {
 
 /// Result of the two-sided build boundary: an authorized build plan followed by
 /// an authorized digest of the produced artifact.
+#[allow(dead_code)] // Public embedding API; current CLI smoke tests exercise the lower-level gate.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GuardedBuildResult {
     pub preflight: GateDecision,
@@ -267,6 +268,7 @@ pub struct GuardedBuildResult {
 /// This is an application-level adapter contract. It cannot prevent callers
 /// from bypassing this API and invoking external build tools directly; operating
 /// system and CI policy must make this path mandatory in production.
+#[allow(dead_code)] // Used by integration tests and intended for trusted build orchestrators.
 pub fn run_guarded_build<F>(
     build_plan_path: &Path,
     artifact_path: &Path,
