@@ -489,3 +489,52 @@ mod trust_rotation_tests {
         assert!(VerifiedRegistry::from_signed(&registry, &new_pin).is_ok());
     }
 }
+
+
+#[cfg(test)]
+mod release_e2e_tests {
+    use super::*;
+    use crate::evidence_audit::verify_audit_chain;
+    use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+
+    #[test]
+    fn r06_end_to_end_preflight_build_postflight_and_audit_chain() {
+        let (registry, envelope, pin) = authority_integration_tests::signed_authority("active");
+        let verified = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let plan = std::env::temp_dir().join(format!("al-r06-plan-{}.json", std::process::id()));
+        let artifact = std::env::temp_dir().join(format!("al-r06-artifact-{}.bin", std::process::id()));
+        let ledger = std::env::temp_dir().join(format!("al-r06-ledger-{}.jsonl", std::process::id()));
+        let _ = fs::remove_file(&ledger);
+        fs::write(&plan, br#"{"target":"x86_64-unknown-linux-gnu","profile":"release"}"#).unwrap();
+        let built = Arc::new(AtomicBool::new(false));
+        let built_callback = built.clone();
+        let build_result = run_guarded_build(
+            &plan, &artifact, "2026-11-28T10:00:00Z", "R06-BUILD",
+            "0.2.10.3-r06", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified,
+            move || {
+                built_callback.store(true, Ordering::SeqCst);
+                fs::write(&artifact, b"AL release artifact from end-to-end test")
+                    .map_err(|e| e.to_string())
+            }
+        ).unwrap();
+        assert!(built.load(Ordering::SeqCst));
+        assert_eq!(build_result.preflight.decision.as_str(), "ALLOW");
+        assert_eq!(build_result.postflight.decision.as_str(), "ALLOW");
+
+        let release_result = evaluate_release_artifact_audited(
+            "publish_release", &artifact, "2026-11-28T10:01:00Z",
+            "R06-PUBLISH", "0.2.10.3-r06", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified, &ledger
+        ).unwrap();
+        assert_eq!(release_result.decision.as_str(), "ALLOW");
+        assert_eq!(verify_audit_chain(&ledger).unwrap(), 1);
+        let ledger_text = fs::read_to_string(&ledger).unwrap();
+        assert!(ledger_text.contains("R06-PUBLISH"));
+        assert!(ledger_text.contains("publish_release"));
+
+        let _ = fs::remove_file(plan);
+        let _ = fs::remove_file(artifact);
+        let _ = fs::remove_file(ledger);
+    }
+}
