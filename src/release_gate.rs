@@ -8,6 +8,8 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 use crate::shared_gate::{evaluate_gate, GateDecision, GateRequest, VerifiedRegistry};
+use crate::evidence_audit::{append_audit_event, verify_audit_chain};
+use serde_json::json;
 
 fn is_release_operation(operation: &str) -> bool {
     matches!(operation, "build" | "package" | "publish_release")
@@ -365,4 +367,46 @@ mod guarded_build_tests {
         assert!(!artifact.exists());
         let _ = fs::remove_file(plan);
     }
+}
+
+
+/// Evaluate a release request, durably append the complete decision, and
+/// verify the resulting ledger before returning to the caller. A caller must
+/// not perform an irreversible action until this function returns ALLOW.
+pub fn evaluate_release_artifact_audited(
+    operation: &str,
+    artifact_path: &Path,
+    evaluated_at: &str,
+    decision_id: &str,
+    verifier_version: &str,
+    evidence_refs: Vec<String>,
+    envelope: &Value,
+    registry: &VerifiedRegistry,
+    audit_ledger_path: &Path,
+) -> Result<GateDecision, String> {
+    let decision = evaluate_release_artifact(
+        operation, artifact_path, evaluated_at, decision_id,
+        verifier_version, evidence_refs, envelope, registry
+    )?;
+    let event = json!({
+        "event_type":"release_gate_decision",
+        "decision_id":decision.decision_id,
+        "decision":decision.decision.as_str(),
+        "operation":decision.operation,
+        "subject_type":decision.subject_type,
+        "subject_sha256":decision.subject_sha256,
+        "rulebook_version":decision.rulebook_version,
+        "rulebook_sha256":decision.rulebook_sha256,
+        "evaluated_at":decision.evaluated_at,
+        "verifier_version":decision.verifier_version,
+        "control_ids":decision.control_ids,
+        "evidence_refs":decision.evidence_refs,
+        "reason_codes":decision.reason_codes,
+        "explanation":decision.explanation
+    });
+    append_audit_event(audit_ledger_path, &event)
+        .map_err(|e| format!("release decision not authorized for action: durable audit append failed: {e}"))?;
+    verify_audit_chain(audit_ledger_path)
+        .map_err(|e| format!("release decision not authorized for action: audit verification failed: {e}"))?;
+    Ok(decision)
 }
