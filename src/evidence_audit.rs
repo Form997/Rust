@@ -121,10 +121,15 @@ pub fn append_audit_event(path: &Path, event: &Value) -> Result<String, Evidence
     record["record_hash"] = Value::String(hash.clone());
     let mut file = OpenOptions::new().create(true).append(true).open(path)
         .map_err(|e| EvidenceError(format!("cannot open audit ledger: {e}")))?;
-    if count > 0 || path.metadata().map(|m| m.len() > 0).unwrap_or(false) { file.write_all(b"\n").map_err(|e| EvidenceError(e.to_string()))?; }
-    file.write_all(serde_json::to_string(&record).map_err(|e| EvidenceError(e.to_string()))?.as_bytes())
-        .map_err(|e| EvidenceError(e.to_string()))?;
-    file.flush().map_err(|e| EvidenceError(e.to_string()))?;
+    let mut line = Vec::new();
+    if count > 0 || path.metadata().map(|m| m.len() > 0).unwrap_or(false) {
+        line.push(b'\n');
+    }
+    line.extend_from_slice(serde_json::to_string(&record)
+        .map_err(|e| EvidenceError(e.to_string()))?.as_bytes());
+    file.write_all(&line).map_err(|e| EvidenceError(e.to_string()))?;
+    // Request durable persistence before the caller may proceed with an action.
+    file.sync_all().map_err(|e| EvidenceError(format!("cannot durably sync audit ledger: {e}")))?;
     Ok(hash)
 }
 

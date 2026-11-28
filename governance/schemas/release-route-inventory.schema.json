@@ -1,0 +1,35 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://form997.github.io/Rust/governance/schemas/release-route-inventory.schema.json",
+  "title":"AL Release Route Inventory",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","inventory_status","owner","reviewed_at","routes","coverage_evidence"],
+  "properties":{
+    "schema_version":{"const":"0.1.0"},
+    "inventory_status":{"enum":["NOT_SET","proposed","verified","blocked"]},
+    "owner":{"type":"string","minLength":1},
+    "reviewed_at":{"type":["string","null"],"format":"date-time"},
+    "routes":{"type":"array","items":{
+      "type":"object","additionalProperties":false,
+      "required":["route_id","channel","owner","mandatory_gate","gate_adapter","bypass_test_status","evidence_ids"],
+      "properties":{
+        "route_id":{"type":"string","minLength":1},
+        "channel":{"type":"string","minLength":1},
+        "owner":{"type":"string","minLength":1},
+        "mandatory_gate":{"type":"boolean"},
+        "gate_adapter":{"type":"string","minLength":1},
+        "bypass_test_status":{"enum":["NOT_TESTED","passed","failed"]},
+        "evidence_ids":{"type":"array","items":{"type":"string","minLength":1}}
+      }
+    }},
+    "coverage_evidence":{"type":"array","items":{"type":"string","minLength":1}}
+  },
+  "allOf":[{
+    "if":{"properties":{"inventory_status":{"const":"verified"}}},
+    "then":{
+      "properties":{"reviewed_at":{"type":"string","format":"date-time"},"routes":{"minItems":1},"coverage_evidence":{"minItems":1}},
+      "not":{"properties":{"routes":{"contains":{"properties":{"mandatory_gate":{"const":false}}}}}}
+    }
+  }]
+}
