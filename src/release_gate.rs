@@ -249,3 +249,63 @@ mod authority_integration_tests {
         let _ = fs::remove_file(artifact);
     }
 }
+
+
+/// Result of the two-sided build boundary: an authorized build plan followed by
+/// an authorized digest of the produced artifact.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GuardedBuildResult {
+    pub preflight: GateDecision,
+    pub postflight: GateDecision,
+}
+
+/// Run a build callback only after a signed Rulebook ALLOW for the exact build
+/// plan, then require a second ALLOW for the exact produced artifact.
+///
+/// This is an application-level adapter contract. It cannot prevent callers
+/// from bypassing this API and invoking external build tools directly; operating
+/// system and CI policy must make this path mandatory in production.
+pub fn run_guarded_build<F>(
+    build_plan_path: &Path,
+    artifact_path: &Path,
+    evaluated_at: &str,
+    decision_prefix: &str,
+    verifier_version: &str,
+    evidence_refs: Vec<String>,
+    envelope: &Value,
+    registry: &VerifiedRegistry,
+    build: F,
+) -> Result<GuardedBuildResult, String>
+where
+    F: FnOnce() -> Result<(), String>,
+{
+    let plan_bytes = fs::read(build_plan_path)
+        .map_err(|e| format!("cannot read build plan {}: {e}", build_plan_path.display()))?;
+    let preflight_request = GateRequest {
+        decision_id: format!("{decision_prefix}-PREFLIGHT"),
+        subsystem: "release".to_owned(),
+        operation: "build".to_owned(),
+        subject_type: "build_plan".to_owned(),
+        subject_sha256: sha256_hex(&plan_bytes),
+        evaluated_at: evaluated_at.to_owned(),
+        verifier_version: verifier_version.to_owned(),
+        evidence_refs: evidence_refs.clone(),
+    };
+    let preflight = evaluate_gate(&preflight_request, envelope, registry)
+        .map_err(|e| format!("build preflight request invalid: {e}"))?;
+    if preflight.decision.as_str() != "ALLOW" {
+        return Err(format!("build preflight blocked: {}", preflight.explanation));
+    }
+
+    build().map_err(|e| format!("build callback failed: {e}"))?;
+
+    let postflight = evaluate_release_artifact(
+        "build", artifact_path, evaluated_at,
+        &format!("{decision_prefix}-POSTFLIGHT"), verifier_version,
+        evidence_refs, envelope, registry
+    )?;
+    if postflight.decision.as_str() != "ALLOW" {
+        return Err(format!("build artifact postflight blocked: {}", postflight.explanation));
+    }
+    Ok(GuardedBuildResult { preflight, postflight })
+}
