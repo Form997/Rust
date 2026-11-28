@@ -98,3 +98,154 @@ mod tests {
         assert!(artifact_sha256(&path).is_err());
     }
 }
+
+
+#[cfg(test)]
+mod authority_integration_tests {
+    use super::*;
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use ed25519_dalek::{Signer, SigningKey};
+    use serde_json::{json, Value};
+    use sha2::{Digest, Sha256};
+    use crate::shared_gate::VerifiedRegistry;
+
+    fn fingerprint(key: &SigningKey) -> String {
+        Sha256::digest(key.verifying_key().as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
+    }
+
+    fn signed_authority(signer_status: &str) -> (Value, Value, String) {
+        // Deterministic test-only keys. These keys are never production trust material.
+        let root = SigningKey::from_bytes(&[71u8; 32]);
+        let owner = SigningKey::from_bytes(&[72u8; 32]);
+        let registry_payload = json!({
+            "registry_version":"test-1",
+            "keys":[{
+                "key_id":"test-owner",
+                "principal_id":"test-owner-principal",
+                "role":"rulebook_authority",
+                "status":signer_status,
+                "public_key_base64":STANDARD.encode(owner.verifying_key().as_bytes())
+            }]
+        });
+        let registry_signature = root.sign(&serde_json::to_vec(&registry_payload).unwrap());
+        let registry = json!({
+            "algorithm":"Ed25519",
+            "root_public_key_base64":STANDARD.encode(root.verifying_key().as_bytes()),
+            "payload":registry_payload,
+            "signature_base64":STANDARD.encode(registry_signature.to_bytes())
+        });
+        let control_id = "CTRL-RELEASE-TEST";
+        let payload = json!({
+            "bundle_id":"al-release-gate-test",
+            "rulebook_version":"0.2.10.3-test",
+            "status":"approved",
+            "approval":{
+                "state":"approved",
+                "approver":"test-owner-principal",
+                "approved_at":"2026-11-28T00:00:00Z"
+            },
+            "rules":[{
+                "rule_id":"AL-RELEASE-TEST",
+                "status":"approved",
+                "title":"Test-only release gate authorization",
+                "scope":["release"],
+                "operations":["build","package","publish_release"],
+                "control_ids":[control_id]
+            }],
+            "control_evidence":[{
+                "control_id":control_id,
+                "gate":"release",
+                "status":"implemented",
+                "verification_status":"verified",
+                "owner":"test-only",
+                "scope":"release adapter integration test",
+                "last_verified_at":"2026-11-28T00:00:00Z",
+                "test_ids":["R01-POSITIVE-AUTH"],
+                "evidence_ids":["R01-TEST-EVIDENCE"]
+            }]
+        });
+        let bundle_signature = owner.sign(&serde_json::to_vec(&payload).unwrap());
+        let envelope = json!({
+            "algorithm":"Ed25519",
+            "key_id":"test-owner",
+            "payload":payload,
+            "signature_base64":STANDARD.encode(bundle_signature.to_bytes())
+        });
+        (registry, envelope, fingerprint(&root))
+    }
+
+    fn temp_artifact(label: &str, bytes: &[u8]) -> std::path::PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "al-r01-{label}-{}.bin", std::process::id()
+        ));
+        fs::write(&path, bytes).unwrap();
+        path
+    }
+
+    #[test]
+    fn r01_positive_allow_requires_independently_pinned_root_and_active_owner_signature() {
+        let (registry, envelope, pin) = signed_authority("active");
+        let verified_registry = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let artifact = temp_artifact("allow", b"R01 exact release bytes");
+        let decision = evaluate_release_artifact(
+            "publish_release", &artifact, "2026-11-28T10:00:00Z",
+            "R01-ALLOW-001", "0.2.10.3-r01", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified_registry
+        ).unwrap();
+        assert_eq!(decision.decision.as_str(), "ALLOW");
+        assert_eq!(decision.operation, "publish_release");
+        assert_eq!(decision.subject_sha256, sha256_hex(b"R01 exact release bytes"));
+        assert_eq!(decision.rulebook_version.as_deref(), Some("0.2.10.3-test"));
+        let _ = fs::remove_file(artifact);
+    }
+
+    #[test]
+    fn r01_wrong_out_of_band_root_pin_is_rejected() {
+        let (registry, _, _) = signed_authority("active");
+        assert!(VerifiedRegistry::from_signed(&registry, &"00".repeat(32)).is_err());
+    }
+
+    #[test]
+    fn r01_revoked_owner_key_cannot_authorize_release() {
+        let (registry, envelope, pin) = signed_authority("revoked");
+        let verified_registry = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let artifact = temp_artifact("revoked", b"release bytes");
+        let decision = evaluate_release_artifact(
+            "package", &artifact, "2026-11-28T10:00:00Z",
+            "R01-REVOKED-001", "0.2.10.3-r01", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified_registry
+        ).unwrap();
+        assert_eq!(decision.decision.as_str(), "DENY");
+        assert!(decision.reason_codes.iter().any(|c| c == "RULEBOOK_AUTHORITY_VERIFICATION_FAILED"));
+        let _ = fs::remove_file(artifact);
+    }
+
+    #[test]
+    fn r01_tampered_signed_rulebook_cannot_authorize_release() {
+        let (registry, mut envelope, pin) = signed_authority("active");
+        let verified_registry = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        envelope["payload"]["rulebook_version"] = Value::String("9.9.9".into());
+        let artifact = temp_artifact("tampered", b"release bytes");
+        let decision = evaluate_release_artifact(
+            "build", &artifact, "2026-11-28T10:00:00Z",
+            "R01-TAMPER-001", "0.2.10.3-r01", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified_registry
+        ).unwrap();
+        assert_eq!(decision.decision.as_str(), "DENY");
+        let _ = fs::remove_file(artifact);
+    }
+
+    #[test]
+    fn r01_missing_evidence_cannot_produce_allow() {
+        let (registry, envelope, pin) = signed_authority("active");
+        let verified_registry = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let artifact = temp_artifact("no-evidence", b"release bytes");
+        let decision = evaluate_release_artifact(
+            "build", &artifact, "2026-11-28T10:00:00Z",
+            "R01-EVIDENCE-001", "0.2.10.3-r01", vec![],
+            &envelope, &verified_registry
+        ).unwrap();
+        assert_eq!(decision.decision.as_str(), "REVIEW");
+        let _ = fs::remove_file(artifact);
+    }
+}
