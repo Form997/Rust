@@ -123,7 +123,7 @@ pub fn append_audit_event(path: &Path, event: &Value) -> Result<String, Evidence
         .map_err(|e| EvidenceError(format!("cannot open audit ledger: {e}")))?;
     let mut line = Vec::new();
     if count > 0 || path.metadata().map(|m| m.len() > 0).unwrap_or(false) {
-        line.push(b'\\n');
+        line.push(b'\n');
     }
     line.extend_from_slice(serde_json::to_string(&record)
         .map_err(|e| EvidenceError(e.to_string()))?.as_bytes());
