@@ -113,7 +113,7 @@ mod authority_integration_tests {
         Sha256::digest(key.verifying_key().as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
     }
 
-    fn signed_authority(signer_status: &str) -> (Value, Value, String) {
+    pub(super) fn signed_authority(signer_status: &str) -> (Value, Value, String) {
         // Deterministic test-only keys. These keys are never production trust material.
         let root = SigningKey::from_bytes(&[71u8; 32]);
         let owner = SigningKey::from_bytes(&[72u8; 32]);
@@ -314,7 +314,6 @@ where
 #[cfg(test)]
 mod guarded_build_tests {
     use super::*;
-    use serde_json::Value;
     use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 
     #[test]
@@ -326,13 +325,14 @@ mod guarded_build_tests {
         fs::write(&plan, br#"{"toolchain":"test","target":"test"}"#).unwrap();
         let ran = Arc::new(AtomicBool::new(false));
         let ran_build = ran.clone();
+        let artifact_for_build = artifact.clone();
         let result = run_guarded_build(
             &plan, &artifact, "2026-11-28T10:00:00Z", "R02-ALLOW",
             "0.2.10.3-r02", vec!["R01-TEST-EVIDENCE".into()],
             &envelope, &verified,
             move || {
                 ran_build.store(true, Ordering::SeqCst);
-                fs::write(&artifact, b"guarded build output").map_err(|e| e.to_string())
+                fs::write(&artifact_for_build, b"guarded build output").map_err(|e| e.to_string())
             }
         ).unwrap();
         assert!(ran.load(Ordering::SeqCst));
