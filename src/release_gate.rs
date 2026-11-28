@@ -459,3 +459,33 @@ mod audited_release_tests {
         let _ = fs::remove_dir_all(ledger_directory);
     }
 }
+
+
+#[cfg(test)]
+mod trust_rotation_tests {
+    use super::*;
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use ed25519_dalek::{Signer, SigningKey};
+    use serde_json::json;
+    use sha2::{Digest, Sha256};
+
+    #[test]
+    fn r05_rotated_root_requires_new_out_of_band_pin() {
+        let old_root = SigningKey::from_bytes(&[81u8; 32]);
+        let new_root = SigningKey::from_bytes(&[82u8; 32]);
+        let payload = json!({"registry_version":"2.0.0","keys":[]});
+        let signature = new_root.sign(&serde_json::to_vec(&payload).unwrap());
+        let registry = json!({
+            "algorithm":"Ed25519",
+            "root_public_key_base64":STANDARD.encode(new_root.verifying_key().as_bytes()),
+            "payload":payload,
+            "signature_base64":STANDARD.encode(signature.to_bytes())
+        });
+        let old_pin = Sha256::digest(old_root.verifying_key().as_bytes())
+            .iter().map(|b| format!("{b:02x}")).collect::<String>();
+        let new_pin = Sha256::digest(new_root.verifying_key().as_bytes())
+            .iter().map(|b| format!("{b:02x}")).collect::<String>();
+        assert!(VerifiedRegistry::from_signed(&registry, &old_pin).is_err());
+        assert!(VerifiedRegistry::from_signed(&registry, &new_pin).is_ok());
+    }
+}
