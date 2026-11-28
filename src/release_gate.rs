@@ -390,23 +390,72 @@ pub fn evaluate_release_artifact_audited(
     )?;
     let event = json!({
         "event_type":"release_gate_decision",
-        "decision_id":decision.decision_id,
+        "decision_id":&decision.decision_id,
         "decision":decision.decision.as_str(),
-        "operation":decision.operation,
-        "subject_type":decision.subject_type,
-        "subject_sha256":decision.subject_sha256,
-        "rulebook_version":decision.rulebook_version,
-        "rulebook_sha256":decision.rulebook_sha256,
-        "evaluated_at":decision.evaluated_at,
-        "verifier_version":decision.verifier_version,
-        "control_ids":decision.control_ids,
-        "evidence_refs":decision.evidence_refs,
-        "reason_codes":decision.reason_codes,
-        "explanation":decision.explanation
+        "operation":&decision.operation,
+        "subject_type":&decision.subject_type,
+        "subject_sha256":&decision.subject_sha256,
+        "rulebook_version":&decision.rulebook_version,
+        "rulebook_sha256":&decision.rulebook_sha256,
+        "evaluated_at":&decision.evaluated_at,
+        "verifier_version":&decision.verifier_version,
+        "control_ids":&decision.control_ids,
+        "evidence_refs":&decision.evidence_refs,
+        "reason_codes":&decision.reason_codes,
+        "explanation":&decision.explanation
     });
     append_audit_event(audit_ledger_path, &event)
         .map_err(|e| format!("release decision not authorized for action: durable audit append failed: {e}"))?;
     verify_audit_chain(audit_ledger_path)
         .map_err(|e| format!("release decision not authorized for action: audit verification failed: {e}"))?;
     Ok(decision)
+}
+
+
+#[cfg(test)]
+mod audited_release_tests {
+    use super::*;
+    use crate::evidence_audit::verify_audit_chain;
+    use serde_json::Value;
+
+    #[test]
+    fn r03_allow_is_not_returned_until_audit_record_is_written_and_verified() {
+        let (registry, envelope, pin) = authority_integration_tests::signed_authority("active");
+        let verified = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let artifact = std::env::temp_dir().join(format!("al-r03-artifact-{}.bin", std::process::id()));
+        let ledger = std::env::temp_dir().join(format!("al-r03-ledger-{}.jsonl", std::process::id()));
+        let _ = fs::remove_file(&ledger);
+        fs::write(&artifact, b"audited release bytes").unwrap();
+        let decision = evaluate_release_artifact_audited(
+            "publish_release", &artifact, "2026-11-28T10:00:00Z",
+            "R03-ALLOW-001", "0.2.10.3-r03", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified, &ledger
+        ).unwrap();
+        assert_eq!(decision.decision.as_str(), "ALLOW");
+        assert_eq!(verify_audit_chain(&ledger).unwrap(), 1);
+        let record = fs::read_to_string(&ledger).unwrap();
+        assert!(record.contains("R03-ALLOW-001"));
+        assert!(record.contains("release_gate_decision"));
+        let _ = fs::remove_file(artifact);
+        let _ = fs::remove_file(ledger);
+    }
+
+    #[test]
+    fn r03_audit_write_failure_prevents_allow_from_returning() {
+        let (registry, envelope, pin) = authority_integration_tests::signed_authority("active");
+        let verified = VerifiedRegistry::from_signed(&registry, &pin).unwrap();
+        let artifact = std::env::temp_dir().join(format!("al-r03-fail-artifact-{}.bin", std::process::id()));
+        let ledger_directory = std::env::temp_dir().join(format!("al-r03-ledger-dir-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&ledger_directory);
+        fs::create_dir(&ledger_directory).unwrap();
+        fs::write(&artifact, b"audited release bytes").unwrap();
+        let result = evaluate_release_artifact_audited(
+            "publish_release", &artifact, "2026-11-28T10:00:00Z",
+            "R03-FAIL-001", "0.2.10.3-r03", vec!["R01-TEST-EVIDENCE".into()],
+            &envelope, &verified, &ledger_directory
+        );
+        assert!(result.is_err());
+        let _ = fs::remove_file(artifact);
+        let _ = fs::remove_dir_all(ledger_directory);
+    }
 }
